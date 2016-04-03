@@ -11,7 +11,7 @@ int LED_G = 12;
 int LED_B = 13;
 
 // I2C address and var
-int SLAVE_ADDRESS = 0x00;
+int SLAVE_ADDRESS = 0x04; // some initial value, changed later
 int number = 0;
 int state = 0;
 
@@ -23,7 +23,7 @@ void setup() {
   pinMode(SW1, INPUT_PULLUP);
   pinMode(SW2, INPUT_PULLUP);
   pinMode(SW3, INPUT_PULLUP);
-  SLAVE_ADDRESS = !digitalRead(SW1)*100 + !digitalRead(SW2)*10 + !digitalRead(SW3)*1;
+  SLAVE_ADDRESS = !digitalRead(SW1)*11 + !digitalRead(SW2)*7 + !digitalRead(SW3)*5;
   Serial.print("I2C slave address set to ");
   Serial.println(SLAVE_ADDRESS);
   
