@@ -23,7 +23,7 @@ void setup() {
   pinMode(SW1, INPUT_PULLUP);
   pinMode(SW2, INPUT_PULLUP);
   pinMode(SW3, INPUT_PULLUP);
-  SLAVE_ADDRESS = !digitalRead(SW1)*11 + !digitalRead(SW2)*7 + !digitalRead(SW3)*5;
+  SLAVE_ADDRESS = !digitalRead(SW1)*1 + !digitalRead(SW2)*2 + !digitalRead(SW3)*4 + 3;
   Serial.print("I2C slave address set to ");
   Serial.println(SLAVE_ADDRESS);
   
