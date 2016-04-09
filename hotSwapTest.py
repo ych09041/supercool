@@ -5,23 +5,42 @@ bus = smbus.SMBus(1)
 ##slaveAddress = 0x05
 
 class ArmObj:
-    def __init__(self, busLine):
+    """Object for representing 1 mechanical arm. Using OOP just for data management.
+
+    """
+    def __init__(self, busLine, i2cMinRange=3, i2cMaxRange=10):
+        """Constructor for ArmObj. Needs a busline that it operates on and the interval of i2cAddresses that its linkages
+        can live on, inclusive. Constructor initializes the object variables:
+
+        positions = list of i2c addresses in the order they are connected (first element is the lowest linkage, last element is the top linkage)
+        errorState = True if something has gone wrong- need to run posDetect() or something else
+        linkMin = minimum value that the encoder can sweep to
+        linkMax = maximum value that the encoder can sweep to
+        posDetect = fills the positions list.
+
+        """
+        
+        
         self.bus = busLine
         self.positions = []
         self.errorState = False
+        self.linkMin = 0
+        self.linkMax = 500
+        self.i2cMin = i2cMinRange
+        self.i2cMax = i2cMaxRange
         posDetect()
 
     def posDetect():
-        """Pings all potential i2c addresses of linkages,
-        sets self.position to the current order and addresses of the linkages
+        """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
+        Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
         """
 
         addressBook = []
-        for address in range(3,11):
+        for address in range(self.i2cMin,self.i2cMax+1):
             onTime = ping(address)
             if onTime> -1:
                 addressBook.append((address,onTime))
-        addressBook.sort(key=lambda tup: tup[1])
+        addressBook.sort(key=lambda tup: tup[1],reverse=True)
         self.positions = []
         print "Detected ",len(addressBook)," number of linkages. In order:"
         for i in range(0,len(addressBook)):
@@ -69,6 +88,9 @@ class ArmObj:
         
 
     def writeOneLink(address,value):
+        """Writes 'value' to the device at 'address' over i2c
+
+        """
         if value > self.linkMax:
             print "Trying to move too far!"
             self.bus.write_byte(address, self.linkMax)
@@ -84,6 +106,12 @@ class ArmObj:
         return number
 
     def writeArm(lis):
+        """Takes a list of integers, lis.
+        Writes each element of lis to the corresponding linkage by position ordering.
+        Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
+
+        """
+        
         if len(lis) > len(self.positions):
             print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
         if len(lis) < len(self.positions):
@@ -101,9 +129,15 @@ while True:
     varSplit = var.split(",")
     if not var:
         continue
-    writeNumber(int(varSplit[0]), int(varSplit[1]))
-    print "RPI: Hi Arduino, I sent you ", var
-    time.sleep(1)
+    if len(varSplit) != 2:
+        if varSplit[0] == "p":
+            arm.posDetect()
+        if varSplit[0] == "c":
+            arm.writeArm(int(varSplit[1:len(varSplit)]))
+    else:
+        writeNumber(int(varSplit[0]), int(varSplit[1]))
+        print "RPI: Hi Arduino, I sent you ", var
+        time.sleep(1)
 
-    number = readNumber(int(varSplit[0]))
-    print "Arduino: Hey RPI, I received a digit ", number
+        number = readNumber(int(varSplit[0]))
+        print "Arduino: Hey RPI, I received a digit ", number
