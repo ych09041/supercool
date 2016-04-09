@@ -86,13 +86,12 @@ class ArmObj:
     def writeArm(lis):
         if len(lis) > len(self.positions):
             print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
-            return
         if len(lis) < len(self.positions):
-            print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
-            return
+            print "WARNING: COMMAND IS FOR A SHORTER ARM CONFIGURATION"
         else:
             for i in range(0,len(lis)):
                 self.writeOneLink(self.positions[i], lis[i])
+        return
 
 
 arm = ArmObj(bus)
