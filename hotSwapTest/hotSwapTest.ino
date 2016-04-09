@@ -69,7 +69,7 @@ void receiveData(int byteCount) {
 
 // callback for sending data
 void sendData() {
-  if number = -1 {
+  if (number == -1) {
     Wire.write(millis());
   } else {
     Wire.write(number);

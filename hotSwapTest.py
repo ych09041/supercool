@@ -30,14 +30,14 @@ class ArmObj:
         self.i2cMax = i2cMaxRange
         posDetect()
 
-    def posDetect():
+    def posDetect(self):
         """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
         Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
         """
 
         addressBook = []
         for address in range(self.i2cMin,self.i2cMax+1):
-            onTime = ping(address)
+            onTime = self.ping(address)
             if onTime> -1:
                 addressBook.append((address,onTime))
         addressBook.sort(key=lambda tup: tup[1],reverse=True)
@@ -87,7 +87,7 @@ class ArmObj:
     
         
 
-    def writeOneLink(address,value):
+    def writeOneLink(self,address,value):
         """Writes 'value' to the device at 'address' over i2c
 
         """
@@ -101,11 +101,11 @@ class ArmObj:
             self.bus.write_byte(address, value)
         return -1
 
-    def readOneLink(address):
+    def readOneLink(self,address):
         number = self.bus.read_byte(address)
         return number
 
-    def writeArm(lis):
+    def writeArm(self,lis):
         """Takes a list of integers, lis.
         Writes each element of lis to the corresponding linkage by position ordering.
         Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
@@ -135,9 +135,9 @@ while True:
         if varSplit[0] == "c":
             arm.writeArm(int(varSplit[1:len(varSplit)]))
     else:
-        writeNumber(int(varSplit[0]), int(varSplit[1]))
+        arm.writeOneLink(int(varSplit[0]), int(varSplit[1]))
         print "RPI: Hi Arduino, I sent you ", var
         time.sleep(1)
 
-        number = readNumber(int(varSplit[0]))
+        number = arm.readOneLink(int(varSplit[0]))
         print "Arduino: Hey RPI, I received a digit ", number
