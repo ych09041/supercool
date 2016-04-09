@@ -28,7 +28,7 @@ class ArmObj:
         self.linkMax = 500
         self.i2cMin = i2cMinRange
         self.i2cMax = i2cMaxRange
-        posDetect()
+        self.posDetect()
 
     def posDetect(self):
         """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
@@ -49,15 +49,16 @@ class ArmObj:
         self.errorState = False
         return
         
-    def ping(address):
+    def ping(self,address):
         """Pings the given i2c address. Returns the millis() of the Arduino if it is there,
         returns -1 otherwise"""
                                    
-        bus.write_byte(address,-1)
+        
         try:
+            bus.write_byte(address,-1)
             number = bus.read_byte(address)
             return number
-        except ERRORTYPEHERE:
+        except IOError:
             return -1
 
     
