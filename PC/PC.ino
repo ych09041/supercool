@@ -7,19 +7,19 @@ int incomingByte = 0;  // for incoming serial data
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = 5, Ki = 1, Kd = 0;
-double minPoint = -10;
-double maxPoint = 10;
+double Kp = 10, Ki = 1, Kd = 3;
+double minPoint = -20;
+double maxPoint = 20;
 double val = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // Velocity Computation Variables
-volatile unsigned long encoder0Pos = 0;
+volatile signed long encoder0Pos = 0;
 unsigned long lastTime, currTime;
 double currPos, lastPos, velocity, ticktodeg;
-int SampleTime = 5; //5  msec
+int SampleTime = 500; //500  msec
 
 // Motor PWM
 int INPUT1 = 5; //motor High-side Right-side
@@ -38,9 +38,9 @@ void setup() {
 
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
-  myPID.SetSampleTime(SampleTime);
+  myPID.SetSampleTime(5);
   myPID.SetControllerDirection(DIRECT);
-  myPID.SetOutputLimits((double) - 1.5, (double) maxPoint);
+  myPID.SetOutputLimits((double) minPoint, (double) maxPoint);
 
   pinMode(encoder0PinA, INPUT);
   pinMode(encoder0PinB, INPUT);
@@ -53,7 +53,7 @@ void setup() {
 
   Serial.begin (9600);
   currPos, lastPos, velocity  = 0;
-  ticktodeg = 1.0 / (12.0 * 120.0);
+  ticktodeg = 1.0 /2.0;
 
   // Initialize Motor pwm
   pinMode(INPUT1, OUTPUT);
@@ -76,35 +76,38 @@ void loop() {
   if (Serial.available() > 0) {
     // read the incoming byte:
     incomingByte = Serial.read();
-  }
 
-  if (incomingByte == 97) {
-    Setpoint = currPos + 5.0;
-  }
-  if (incomingByte == 100) {
-    Setpoint = currPos - 5.0;
+    if (incomingByte == 97) {
+      Setpoint = currPos + 2.0;
+      incomingByte = 0;
+    }
+    if (incomingByte == 100) {
+      Setpoint = currPos - 2.0;
+      incomingByte = 0;
+    }
   }
 
   Input = currPos;
   myPID.Compute();
 
   if (Output > 0) {
-    val = myMap(Output, minPoint, maxPoint, 0, 1.0);
+    val = myMap(Output, 0, maxPoint, 0, 1.0);
     motor_forward_raw(val);
     heading = 'a';
   }
   else {
-    val = myMap(-Output, minPoint, maxPoint, 0, 1.0);
+    val = myMap(-Output, 0, maxPoint, 0, 1.0);
     motor_reverse_raw(val);
     heading = 'd';
   }
-  
-  if(currTime%1000 < SampleTime)
+  int timeChange = (currTime-lastTime);
+
+  if(timeChange >=  SampleTime)
   {
     Serial.println((int)val, DEC);
     Serial.println(Output,DEC);
     Serial.println(currPos);
-
+    lastTime = currTime;
   }
 }
 
