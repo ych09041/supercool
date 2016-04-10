@@ -28,8 +28,8 @@ class ArmObj:
         self.bus = busLine
         self.positions = []
         self.errorState = False
-        self.linkMin = 0
-        self.linkMax = 500
+        self.linkMin = -45
+        self.linkMax = 45
         self.i2cMin = i2cMinRange
         self.i2cMax = i2cMaxRange
         self.posDetect()
@@ -68,11 +68,11 @@ class ArmObj:
 
 
         try:
-            self.bus.write_byte(address,"d")
-            lmb = self.readMultipleByte(address, 4)
+            self.bus.write_byte(address,100) ## 100 is letter d
+            lmb = self.readMultipleBytes(address, 4)
             number = 0
             for i in range(0, 4):
-                number = (lmb[i]<<8) | number
+                number = (int(lmb[i])<<8) | number
             return number
         except IOError:
             return -1
@@ -100,8 +100,8 @@ class ArmObj:
         returns nothing
 
         """
-        if not command.isalnum():
-            self.badInput()
+        if not command.replace("-","").isalnum():
+            print "Input must be letters, digits, or - (minus sign)"
             return
 
         cmdChar = command[0]
@@ -117,11 +117,15 @@ class ArmObj:
             elif value < self.linkMin:
                 print "Trying to move too far!"
                 value = self.linkMin
-            newCommand = cmdChar + value
+            newCommand = cmdChar + str(value)
         else:
             newCommand = cmdChar
+        newCmdList = []
+
+        for i in newCommand:
+            newCmdList.append(ord(i))
             
-        self.bus.write_i2c_block_data(address, 0, newCommand)
+        self.bus.write_i2c_block_data(address, 0, newCmdList)
 
         return
 
@@ -133,7 +137,7 @@ class ArmObj:
         """
         data = ""
         for i in range(0,numbytes):
-            data += self.bus.read_byte(address)
+            data += str(self.bus.read_byte(address))
         return data
 
     def readOneLink(self,address):
@@ -204,7 +208,7 @@ class ArmObj:
 
         ## detect
         elif string.startswith("detect"):
-            self.calibrate(string)
+            self.detect(string)
 
         ## no match found (invalid command you need help)
         else:
@@ -232,7 +236,7 @@ class ArmObj:
 
         else:
             print "Help Manual"
-            print "Console Commands: \n 1.Link \n 2. Arm \n 3. Record \n 4. Open \n 5. Close \n 6. Run \n 7. Calibrate \n 8. Detect"
+            print "Console Commands: \n 1.Link \n 2. Arm \n 3. Record \n 4. Open \n 5. Close \n 6. Run \n 7. Calibrate \n 8. Detect \n 0. Return to command"
         Num=input("Enter a number for comand help: ")
 
         if Num == 1:
@@ -296,8 +300,10 @@ class ArmObj:
             print "\n Detect \n\n Detects which linkages are on the arm. Prints out the list of linkage's i2c addressess in " \
                   "order of linkage position. Input must match exactly. Saves the detected positions to the internal position tracker." \
                   "\n\n Detect"
+        elif Num == 0:
+            return
         else :
-            print "Type 'Help' for the help manual and enter a number between 1 to 8 for help on console commands." \
+            print "Type 'Help' for the help manual and enter a number between 1 to 8 for help on console commands, or 0 to return." \
                   "\n Thank you!"            
         return
 
@@ -313,21 +319,26 @@ class ArmObj:
         returns nothing
         """
         parsedString = string.split()
-        if len(parsedString) == 3 and parsedString[0] == "link":
-            linkCommand = "l"
+        if len(parsedString) == 3 and parsedString[0] == "link" and not ("abs" in parsedString):
+            rel_or_abs = "l"
         elif len(parsedString) == 4 and parsedString[0] == "link" and parsedString[3] == "-abs":
-            linkCommand = "L"
+            rel_or_abs = "L"
         else:
             self.badInput()
         
         try:
             linkNumber = int(parsedString[1])
             targetPosition = int(parsedString[2])
+
         except ValueError:
             print "ERROR: Gibberish input for link number and/or desired position"
             return
         if len(self.positions) >= linkNumber and linkNumber >= 0:
-            linkCommand += targetPosition
+            linkCommand = rel_or_abs + str(targetPosition)
+            if rel_or_abs == "l":
+                print "Advancing link %d by %d relative" % (linkNumber, targetPosition)
+            else:
+                print "Moving link %d to %d absolute" % (linkNumber, targetPosition)
             self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
         else:
             print "ERROR: Target link is out of range"
@@ -348,24 +359,26 @@ class ArmObj:
         """
 
         parsedString = string.split()
-        if parsedString[0] == "arm":
+        if parsedString[0] == "arm" and not ("-abs" in parsedString):
             commandChar = "l"
+            setpointList = parsedString[1:]
         elif parsedString[0] == "arm" and parsedString[-1] == "-abs":
             commandChar = "L"
+            setpointList = parsedString[1:-1]
         else:
             self.badInput()
-    
-        setpointList = parsedString[1:-2]
+            return
+
         if not len(setpointList) == len(self.positions):
             print("Wrong number of position arguments")
             return
 
         linkIndex = 0
         for setpoint in setpointList:
-            if not setpoint.isnumeric():
+            if not setpoint.isdigit():
                 print("invalid position setpoint input")
                 return
-            self.writeOneLink(self.positionsp[linkIndex], commandChar+setpoint)
+            self.writeOneLink(self.positions[linkIndex], commandChar+setpoint)
             linkIndex += 1
 
         return
@@ -441,7 +454,7 @@ class ArmObj:
             ## this means that the input may be "Record Wait" or some invalid input
             if stringArray[1] == "wait":
                 
-                if stringArray[2].isnumeric() == True:
+                if stringArray[2].isdigit() == True:
                     ## this means the third input is a valid wait time (ms)
 
                     
@@ -566,7 +579,7 @@ class ArmObj:
                 self.writeArm(map(int,arr))
 
     def calibrate(self,string):
-        """Author: Yiran
+        """Author: Cheng Hao Yuan, Yiran
 
         Inputs:
             string: total user input at the console
@@ -577,25 +590,29 @@ class ArmObj:
         set points on the Arduino end should change"""
         ## split the input string into array
         InputArray = string.split()
-        
-        ## Validate inputs
-        if InputArray[0] == "calibrate":
-            pass
-        elif len(InputArray) <= 2:
-            pass
-        else:
+
+        if not len(InputArray) == 2 or not InputArray[0] == "calibrate":
             self.badInput()
-            
-        if InputArray[1] == "-all":
-            ## Calibrate all
+            return
+        if not (InputArray[1].isdigit() or InputArray[1] == "-all"):
+            self.badInput()
+            return
+        
+	if InputArray[1] == "-all":
+            ## calibrate all
+            print "Calibrating all links..."
             for x in self.positions:
                 self.writeOneLink(x,'c')
-        elif len(self.positions) >= int(InputArray[1]):
-            ## Calibrate certain link
-            self.writeOneLink(self.positions[int(InputArray[1])-1],'c')
         else:
-            self.badInput()
+            ## calibrate one specified
+            link_to_cal = int(InputArray[1])
+            if link_to_cal > len(self.positions):
+                print "Specified link does not exist"
+                return
+            print "Calibrating link %d" % link_to_cal
+            self.writeOneLink(self.positions[link_to_cal-1],'c')
         return
+
 
     def detect(self,string):
         """Author: Cheng Hao Yuan
