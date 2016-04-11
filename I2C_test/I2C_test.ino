@@ -16,7 +16,7 @@ int number = 0;
 int state = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // determine I2C address from switches
   pinMode(13, OUTPUT);
