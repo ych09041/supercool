@@ -19,6 +19,7 @@ class ArmObj:
         i2cMin = smallest i2c address
         i2cMax = largest i2c address
         posDetect = fills the positions list.
+        file = the csv file of positions that we are reading
 
         """
         
@@ -32,6 +33,8 @@ class ArmObj:
         self.i2cMax = i2cMaxRange
         self.posDetect()
         self.mode = "Idle"
+
+        self.file = None
 
     def posDetect(self):
         """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
@@ -108,14 +111,24 @@ class ArmObj:
 
         Codes:
         "Idle": puts the arm in idle. Ignores commands until put into a 'working' mode
-        "Direct Drive": lets the user input the desired encoder position for each 
+        "Direct Drive": lets the user input the desired encoder position for each
+        "Record": lets the user record arm motion. Actuation can be done either through
+            buttons on the linkage or keyboard command. Direct Drive functionality is
+            built into Record.
         """
 
         if string == "Idle":
             self.mode = "Idle"
+            print "Arm is now in Idle mode"
             return
         if string == "Direct Drive"
             self.mode = "Direct Drive"
+            print "Arm is now in Direct Drive mode"
+            return
+        if string == "Record":
+            self.mode = "Record"
+            print "Arm is now in Record mode. Linkage calibration", \
+                "is recommended before recording any motions."
             return
 
 
@@ -123,6 +136,9 @@ class ArmObj:
 
         if self.mode == "Direct Drive":
             self.DirectDrive(string)
+            return
+        if self.mode == "Record":
+            self.Record(string)
             return
 
 
@@ -167,27 +183,19 @@ class ArmObj:
         else:
             print "ERROR: Gibberish input"
             return
+
+    def Record(self,string):
+
+        parsedString = string.split()
+        if parsedString[0] == "Open" and len(parsedString) == 2:
             
 
 
+        
 
 
 arm = ArmObj(bus)
 
 while True:
     var = raw_input("Enter slave address, number: ")
-    varSplit = var.split(",")
-    if not var:
-        continue
-    if len(varSplit) != 2:
-        if varSplit[0] == "p":
-            arm.posDetect()
-        if varSplit[0] == "c":
-            arm.writeArm(int(varSplit[1:len(varSplit)]))
-    else:
-        arm.writeOneLink(int(varSplit[0]), int(varSplit[1]))
-        print "RPI: Hi Arduino, I sent you ", var
-        time.sleep(1)
-
-        number = arm.readOneLink(int(varSplit[0]))
-        print "Arduino: Hey RPI, I received a digit ", number
+    arm.interpretCommand(var)
