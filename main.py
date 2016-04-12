@@ -121,7 +121,7 @@ class ArmObj:
             self.mode = "Idle"
             print "Arm is now in Idle mode"
             return
-        if string == "Direct Drive"
+        if string == "Direct Drive":
             self.mode = "Direct Drive"
             print "Arm is now in Direct Drive mode"
             return
@@ -195,6 +195,9 @@ class ArmObj:
 
 
 arm = ArmObj(bus)
+
+print "Welcome to the Modular Arm Command Interface."\
+      "Type \"help\" for a list of commands."
 
 while True:
     var = raw_input("Enter slave address, number: ")
