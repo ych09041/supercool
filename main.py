@@ -16,6 +16,8 @@ class ArmObj:
         errorState = True if something has gone wrong- need to run posDetect() or something else
         linkMin = minimum value that the encoder can sweep to
         linkMax = maximum value that the encoder can sweep to
+        i2cMin = smallest i2c address
+        i2cMax = largest i2c address
         posDetect = fills the positions list.
 
         """
@@ -29,6 +31,7 @@ class ArmObj:
         self.i2cMin = i2cMinRange
         self.i2cMax = i2cMaxRange
         self.posDetect()
+        self.mode = "Idle"
 
     def posDetect(self):
         """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
@@ -61,35 +64,13 @@ class ArmObj:
         except IOError:
             return -1
 
-    
-##    def resetArm():
-##        address = i2cDetect()
-##        if len(address) > 1:
-##            print "ERROR, ARM IS HAS AT LEAST ONE MODULE ON IT"
-##            self.errorState = True
-##        else
 
-
-
-
-##    def hotSwap():
-##        newAddresses = self.i2cDetect()
-##        delta = 0
-##        operation = "Detected no change"
-##        if self.positions[-1] not in newAddresses:
-##            delta += 1
-##            operation = "Detected that top module was removed"
-##        for address in newAddresses:
-##            if address not in self.positions:
-##                delta += 1
-##                positions.append(address)
-##                operation = "Detected the addition of 1 module"
-##        if delta > 1:
-    
         
 
     def writeOneLink(self,address,value):
         """Writes 'value' to the device at 'address' over i2c
+
+        No Fail-Safes in place. Maybe add one to see if the i2c address is present
 
         """
         if value > self.linkMax:
@@ -122,7 +103,71 @@ class ArmObj:
                 self.writeOneLink(self.positions[i], lis[i])
         return
 
-    
+    def interpretCommand(self,string):
+        """Interprets and executes user commands, and calls upon the Arduino commands"
+
+        Codes:
+        "Idle": puts the arm in idle. Ignores commands until put into a 'working' mode
+        "Direct Drive": lets the user input the desired encoder position for each 
+        """
+
+        if string == "Idle":
+            self.mode = "Idle"
+            return
+        if string == "Direct Drive"
+            self.mode = "Direct Drive"
+            return
+
+
+
+
+        if self.mode == "Direct Drive":
+            self.DirectDrive(string)
+            return
+
+
+        return
+
+
+    def DirectDrive(self,string):
+        """Processes commands for the direct drive state.
+
+        Valid input format:
+        Link [Link#] [Position]
+        Arm [Position Link #1] [Position Link $2] ...
+        """
+
+        ##Optional: run posDetect before executing commands to automatically have the
+        ##most up-to-date arm i2c addresses. Might be good for robustness/protection
+        ##self.posDetect()
+
+        parsedString = string.split()
+        if len(parsedString) == 3 and parsedString[0] == "Link":
+            try:
+                linkNumber = int(parsedString[1])
+                targetPosition = int(parsedString[2])
+            except ValueError:
+                print "ERROR: Gibberish input for link number and/or desired position"
+                return
+            if len(self.positions) >= linkNumber and linkNumber >= 0:
+                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
+            else:
+                print "ERROR: Target link is out of range"
+
+        else if parsedString[0] == "Arm":
+            targetArmPosition = []
+            try:
+                for val in parsedString[1:]):
+                    targetArmPosition.append(int(val))
+            except ValueError:
+                print "ERROR: Gibberish input for 1 or more desired positions"
+                return
+            self.writeArm(targetArmPosition)
+
+        else:
+            print "ERROR: Gibberish input"
+            return
+            
 
 
 
