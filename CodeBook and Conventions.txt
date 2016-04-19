@@ -1,3 +1,8 @@
+
+COMMANDS
+
+---------------------------------------------------------
+
 List of Console Commands:
 
 1. Link
@@ -12,6 +17,10 @@ List of Console Commands:
 	Called by the prefix `Close'
 6. Run
 	Called by the prefix `Run'
+7. Calibrate
+	called by the prefix `Calibrate'
+8. Detect
+	called by the prefix `Detect'
 
 ---------------------------------------------------------
 Link
@@ -70,7 +79,7 @@ a file open- rejects input if this is the case.
 
 Open FilePath
 	FilePath is the path to the desired file. If the file does not exist, create it. If it
-	does exist, must prompt user to choose to overrite, or append to it.
+	does exist, must prompt user to choose to overwrite, or append to it.
 
 ---------------------------------------------------------
 Close
@@ -82,6 +91,24 @@ Close
 
 ---------------------------------------------------------
 Run
+
+Runs the currently open file or runs the saved file at the specified path (okay to run even
+if there is an open file). By Run, we mean that it goes through the recorded path specified
+by the file. Blocks all standard user console commands while executing file, but has emergency
+abort command/function.
+
+Run
+	Runs the currently open file. Fail gracefully if nothing open. Should prompt user
+	to run `help' when failing.
+Run path
+	Run the file at path. Fail gracefully if file is wrong format, invalid input for
+	current arm configuration (e.g. file is for a 4-link arm, but currently only have
+	2 links), and if file does not exist.
+
+---------------------------------------------------------
+
+
+CONVENTIONS
 
 
 
