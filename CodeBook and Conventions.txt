@@ -1,0 +1,33 @@
+List of Console Commands:
+
+1. Link
+	Called by the prefix `Link'
+2. Arm
+	Called by the prefix `Arm'
+3. Record
+	Called by the prefix `Wait'
+4. Open
+	Called by the prefix `Open'
+5. Close
+	Called by the prefix `Close'
+6. 
+
+
+
+
+
+
+---------------------------------------------------------
+Data recording convention
+
+All data that is recorded and read by the arm are in .csv format. Rows in the file are comma 
+delimited, and represent a single arm state. Meaning, each row contains as many elements as
+there are linkages in the arm with 1 exception explained below. Each element is the encoder
+reading of the target position, and the element's index indicates the corresponding linkage's
+position on the arm (first element = bottom linkage)
+
+The one exception to when the number of rows = number of elements is on `waits', i.e. when the
+arm is told to wait at a position for some time. This will be marked by having the first
+element be the keyword "WAIT" followed by exactly one more element in that row (row is of size
+two exactly). The second element indicates the amount of time to wait in milliseconds.
+

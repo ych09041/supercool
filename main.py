@@ -185,9 +185,26 @@ class ArmObj:
             return
 
     def Record(self,string):
+        """Does the back-end execution of the `Record' console command.
+        Inputs:
+            string: total user input at the console in string format
 
-        parsedString = string.split()
-        if parsedString[0] == "Open" and len(parsedString) == 2:
+        Function:
+            Upon receiving just the word `Record', gets
+                all the linkage positions and saves them in the
+                .csv file specified by self.file
+                Please note to follow the data recording convention
+        Errors:
+            Bad input- extra words/numbers in string
+            
+            self.file is closed or does not exist. Should print error statement
+                instead of failing.
+            
+        Returns:
+            Nothing"""
+
+        
+        return
             
 
 
