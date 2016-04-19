@@ -17,7 +17,8 @@ List of Console Commands:
 Link
 
 Executes a movement for 1 link specified by the input. Input formats detailed below. Inputs
-not matching the formats should fail gracefully (print error, go back to console):
+not matching the formats should fail gracefully (print error, go back to console). See below 
+conventions for interpreting relative and absolute position:
 
 Link Link# Value
 	Link# indicates the target link that we want to actuate. e.g. Link#=1 indicates we
@@ -35,7 +36,9 @@ Link Link# Value -abs
 ---------------------------------------------------------
 Arm
 
-Executes a movement for the entire arm. Input format detailed below.
+Executes a movement for the entire arm. Input format detailed below. Inputs not matching the
+formats shoudld fail gracefully (print error, go back to console). See below conventions for
+interpreting relative and absolute position.
 
 Arm List-Of-Numbers
 	List-Of-Nubmers is a list of numbers seperated by spaces. Length of list is equal to
@@ -45,15 +48,48 @@ Arm List-Of-Numbers
 Arm List-Of-Numbers -abs
 	With optional flag -abs, the values are now used as absolute position.
 
+---------------------------------------------------------
+Record
 
+Records the current status of the arm, or records waits (meaning pause in motion). Saves data
+to the open file, throws error if file does not exist. Must follow data recording convention 
+noted below.
+
+Record
+	Records all the positions of the arm.
+
+Record Wait Time
+	Records a wait in the control sequence of length Time in milliseconds.
+
+---------------------------------------------------------
+Open
+
+Opens a file. Must be able to recognize proper input refuse to open non-csv files), and fail
+gracefully when unable to locate the specified file. Must also check to see if there is already
+a file open- rejects input if this is the case.
+
+Open FilePath
+	FilePath is the path to the desired file. If the file does not exist, create it. If it
+	does exist, must prompt user to choose to overrite, or append to it.
+
+---------------------------------------------------------
+Close
+
+Closes the currently open file. Fails gracefully if no file is currently open. Input should be
+just the word Close, and nothing else. Reject input if it does not match.
+
+Close
+
+---------------------------------------------------------
+Run
 
 
 
 ---------------------------------------------------------
 Relative and Absolute Position convention
 
-All motion is in units of degrees. 
-0 degrees absolute is treated as pointing straight (no deviation from center).
+All motion is in units of degrees. 0 degrees absolute is treated as pointing straight (no 
+deviation from center). Giving negative relative input means to turn the other way.
 
 ---------------------------------------------------------
 Data recording convention
