@@ -1,3 +1,11 @@
+A REVIEW OF GOOD CODING PRACTICE:
+
+1. OBEY DEPENDENCIES STRICTLY
+2. EXTRA SUB FUNCTIONS ARE OKAY, BUT PUT THEM NEAR WHERE THEY ARE USED FOR READABILITY
+3. GOOD VARIABLE NAMES LEADS TO LESS CONFUSION
+
+
+
 
 COMMANDS
 
@@ -106,6 +114,46 @@ Run path
 	2 links), and if file does not exist.
 
 ---------------------------------------------------------
+Calibrate
+
+Calibrates the linkages' various encoder positions. Can either calibrate all the links, or just
+specific links.
+
+Calibrate linkNumber
+	Forces the linkNumber-th link to calibrate. Disables operation until calibration is
+	complete. Must fail gracefully if linkNumber is out of range.
+
+Calibrate -all
+	Keyword -all changes the behavior to calibrate all the linkages along the arm (one at a
+	time!). Disables all other operations until calibration is complete. Should prompt user
+	with a warning that this operation may take a while before continuing with execution
+	(should have the ability to back out of the operation at this prompt).
+
+
+---------------------------------------------------------
+Detect
+
+Detects which linkages are on the arm. Prints out the list of linkage's i2c addressess in
+order of linkage position. Input must match exactly. Saves the detected positions to the
+internal position tracker.
+
+Detect
+
+---------------------------------------------------------
+
+
+
+INTERNAL VARIABLES
+
+
+
+---------------------------------------------------------
+For a full list and description of the persistent internal variables, consult the armObj
+doc-string. ALL PERSISTENT INTERNAL VARIABLES MUST BE OBJECT VARIABLES. DO NOT USE ANY GLOBAL
+VARIABLES.
+
+---------------------------------------------------------
+
 
 
 CONVENTIONS
@@ -131,4 +179,18 @@ The one exception to when the number of rows = number of elements is on `waits',
 arm is told to wait at a position for some time. This will be marked by having the first
 element be the keyword "WAIT" followed by exactly one more element in that row (row is of size
 two exactly). The second element indicates the amount of time to wait in milliseconds.
+
+---------------------------------------------------------
+
+
+
+ARDUINO COMMUNICATION PROTOCOL
+-Protocol
+-Codebook
+
+
+---------------------------------------------------------
+
+
+
 
