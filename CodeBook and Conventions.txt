@@ -10,12 +10,50 @@ List of Console Commands:
 	Called by the prefix `Open'
 5. Close
 	Called by the prefix `Close'
-6. 
+6. Run
+	Called by the prefix `Run'
+
+---------------------------------------------------------
+Link
+
+Executes a movement for 1 link specified by the input. Input formats detailed below. Inputs
+not matching the formats should fail gracefully (print error, go back to console):
+
+Link Link# Value
+	Link# indicates the target link that we want to actuate. e.g. Link#=1 indicates we
+	are to move the bottom linkage.
+	
+	Value indicates the # of degrees that we want to move the arm left or right. Value
+	is allowed to be negative!
+
+Link Link# Value -abs
+	Link# is the same as above
+
+	With the optional flag -abs, Value is now interpreted as the absolute position to go
+	to.
+
+---------------------------------------------------------
+Arm
+
+Executes a movement for the entire arm. Input format detailed below.
+
+Arm List-Of-Numbers
+	List-Of-Nubmers is a list of numbers seperated by spaces. Length of list is equal to
+	size of arm. Reject the input if the length is different. Moves each linkage by the
+	amount specified in the list (relative position)
+
+Arm List-Of-Numbers -abs
+	With optional flag -abs, the values are now used as absolute position.
 
 
 
 
 
+---------------------------------------------------------
+Relative and Absolute Position convention
+
+All motion is in units of degrees. 
+0 degrees absolute is treated as pointing straight (no deviation from center).
 
 ---------------------------------------------------------
 Data recording convention
