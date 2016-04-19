@@ -190,7 +190,35 @@ ARDUINO COMMUNICATION PROTOCOL
 
 
 ---------------------------------------------------------
+Protocol
 
+We communicate to the Arduino using i2c. There are two important fields that the Arduino must
+pick-up: The mode of operation, and the argument. This governs what the Arduino needs to do,
+and what the Arduino should return when asked for data.
 
+E.G. Suppose, we want to execute Link. It first has to be communicated that we want to execute
+the Link command, and then the Arduino needs to know how much it needs to move.
 
+Each i2c message therefore contains a prefix (or a header) that consists of a single letter.
+Looking up the letter in the codebook (see below), tells us what the intended command is.
+The rest of the message is the numeric argument for the command (can be null, i.e. message
+is one character long).
 
+E.G. The message l22 signfies that we are using the Link command, and we want to shift the
+linkage by 22 degrees.
+
+Note: Use `atoi()' to parse the numeric part of the message.
+
+---------------------------------------------------------
+Codebook:
+
+This codebook consists of all imaginable modes of operation that I can imagine. Feel free to
+add to it, if need be. However, push your codebook additions ASAP and pull request immediately
+so that others can see the expanded codebook. This is to avoid conflicts between people
+trying to add the same code.
+
+l = Link relative movement, return True when finished, False otherwise
+L = Link absolute movement, return True when finished, False otherwise
+r = Running Record, return current position
+d = Running Detect, return time since turned on (return millis())
+c = calibrate, return True when finished, False otherwise
