@@ -37,6 +37,7 @@ class ArmObj:
         self.file = None
 
     def posDetect(self):
+        ##NEEDS TO BE UPDATED
         """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
         Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
         """
@@ -56,6 +57,7 @@ class ArmObj:
         return
         
     def ping(self,address):
+        ##NEEDS TO BE UPDATED
         """Pings the given i2c address. Returns the millis() of the Arduino if it is there,
         returns -1 otherwise"""
                                    
@@ -71,6 +73,7 @@ class ArmObj:
         
 
     def writeOneLink(self,address,value):
+        ##NEEDS TO BE UPDATED
         """Writes 'value' to the device at 'address' over i2c
 
         No Fail-Safes in place. Maybe add one to see if the i2c address is present
@@ -87,10 +90,12 @@ class ArmObj:
         return -1
 
     def readOneLink(self,address):
+        ##NEEDS TO BE UPDATED
         number = self.bus.read_byte(address)
         return number
 
     def writeArm(self,lis):
+        ##NEEDS TO BE UPDATED
         """Takes a list of integers, lis.
         Writes each element of lis to the corresponding linkage by position ordering.
         Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
@@ -107,6 +112,7 @@ class ArmObj:
         return
 
     def interpretCommand(self,string):
+        ##NEEDS TO BE UPDATED
         """Interprets and executes user commands, and calls upon the Arduino commands"
 
         Codes:
@@ -146,6 +152,7 @@ class ArmObj:
 
 
     def DirectDrive(self,string):
+        ##NEEDS TO BE UPDATED
         """Processes commands for the direct drive state.
 
         Valid input format:
@@ -185,7 +192,9 @@ class ArmObj:
             return
 
     def Record(self,string):
-        """Does the back-end execution of the `Record' console command.
+        """Author:
+
+        Does the back-end execution of the `Record' console command.
         Inputs:
             string: total user input at the console in string format
 
@@ -217,5 +226,5 @@ print "Welcome to the Modular Arm Command Interface."\
       "Type \"help\" for a list of commands."
 
 while True:
-    var = raw_input("Enter slave address, number: ")
+    var = raw_input("Command: ")
     arm.interpretCommand(var)
