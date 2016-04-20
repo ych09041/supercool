@@ -32,13 +32,14 @@ class ArmObj:
         self.i2cMin = i2cMinRange
         self.i2cMax = i2cMaxRange
         self.posDetect()
-        self.mode = "Idle"
 
         self.file = None
 
     def posDetect(self):
         ##NEEDS TO BE UPDATED
-        """Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
+        """Author:
+
+        Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
         Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
         """
 
@@ -58,7 +59,12 @@ class ArmObj:
         
     def ping(self,address):
         ##NEEDS TO BE UPDATED
-        """Pings the given i2c address. Returns the millis() of the Arduino if it is there,
+        """Author:
+
+        Input:
+            address: the i2c address to ping
+    
+        Pings the given i2c address. Returns the millis() of the Arduino if it is there,
         returns -1 otherwise"""
                                    
         
@@ -74,9 +80,15 @@ class ArmObj:
 
     def writeOneLink(self,address,value):
         ##NEEDS TO BE UPDATED
-        """Writes 'value' to the device at 'address' over i2c
+        """Author:
 
-        No Fail-Safes in place. Maybe add one to see if the i2c address is present
+        Inputs:
+            address: i2c address to be written to
+            value: the value to write to that address. Not necessarily numeric.
+
+        Writes 'value' to the device at 'address' over i2c
+
+        returns nothing
 
         """
         if value > self.linkMax:
@@ -91,15 +103,30 @@ class ArmObj:
 
     def readOneLink(self,address):
         ##NEEDS TO BE UPDATED
+        """Author:
+
+        Input:
+            address: the i2c address of the link to read from.
+
+        Gets data from the Arduino at address and returns it.
+
+        return:
+            the data it receives
+
+        """
         number = self.bus.read_byte(address)
         return number
 
     def writeArm(self,lis):
         ##NEEDS TO BE UPDATED
-        """Takes a list of integers, lis.
+        """Author:
+
+        Input:
+            lis: a list of integers, 
         Writes each element of lis to the corresponding linkage by position ordering.
         Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
 
+        returns nothing
         """
         
         if len(lis) > len(self.positions):
@@ -113,14 +140,15 @@ class ArmObj:
 
     def interpretCommand(self,string):
         ##NEEDS TO BE UPDATED
-        """Interprets and executes user commands, and calls upon the Arduino commands"
+        """Author:
 
-        Codes:
-        "Idle": puts the arm in idle. Ignores commands until put into a 'working' mode
-        "Direct Drive": lets the user input the desired encoder position for each
-        "Record": lets the user record arm motion. Actuation can be done either through
-            buttons on the linkage or keyboard command. Direct Drive functionality is
-            built into Record.
+        Input:
+            string: the user inputted string at the console
+
+        Interprets user commands and calls the correct method. Pass the methods "string"
+        Refer to Codebook and Conventions.txt for dictionary of operations. 
+
+        returns nothing.
         """
 
         if string == "Idle":
@@ -152,8 +180,10 @@ class ArmObj:
 
 
     def DirectDrive(self,string):
-        ##NEEDS TO BE UPDATED
-        """Processes commands for the direct drive state.
+        ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
+        """Author:
+
+        Processes commands for the direct drive state.
 
         Valid input format:
         Link [Link#] [Position]
@@ -191,10 +221,52 @@ class ArmObj:
             print "ERROR: Gibberish input"
             return
 
-    def Record(self,string):
+   
+    def helpHelp(self, string):
         """Author:
 
-        Does the back-end execution of the `Record' console command.
+        Inputs:
+            string: the user input string.
+
+        Prints out the help documentation- what the various console commands are and how to
+        use them.
+
+        returns nothing
+        """
+
+
+        return
+
+    def link(self, string):
+        """Author:
+
+        Inputs:
+            string: the user input string
+
+        Executes the Link command functionality. Should parse inputs correctly and fail
+        gracefully. This method is called when first word in "string" is "Link".
+
+        returns nothing
+        """
+
+    def arm(self, string):
+        """Author:
+
+        Inputs:
+            string: the user input string
+
+        Executes the Arm command functionality. This method is called when the first word
+        in "string" is "Arm".
+
+        returns nothing
+        """
+
+     def record(self,string):
+        """Author:
+
+        Does the back-end execution of the `Record' console command. Called when the first
+        word in string is "Record".
+        
         Inputs:
             string: total user input at the console in string format
 
@@ -214,8 +286,72 @@ class ArmObj:
 
         
         return
-            
 
+    def openOpen(self,string):
+        """Author:
+
+        Inputs:
+            string: total user input at the console
+
+        Opens csv files (follow CodeBook and Conventions.txt). Should fail if one is already
+        open. Sets self.file to the target file with correct mode of operation ('w' or 'a')
+        (refer to: https://docs.python.org/2/tutorial/inputoutput.html)
+
+        returns nothing
+        sets self.file"""
+
+        return
+
+    def close(self,string):
+        """Author:
+
+        Inputs:
+            string: total user input at the console
+
+        Closes the open csv. Print warning if no csv is open.
+
+        returns nothing
+        sets self.file to None"""
+
+        return
+
+    def run(self,string):
+        """Author:
+
+        Inputs:
+            string: total user input at the console
+
+        Read CodeBook and Conventions.txt for detailed operation
+
+        returns nothing"""
+
+        return
+
+    def calibrate(self,string):
+        """Author
+
+        Inputs:
+            string: total user input at the console
+
+        Read CodeBook and Conventions.txt for detailed operation
+
+        returns nothing
+        set points on the Arduino end should change"""
+    
+        return
+
+    def detect(self,string):
+         """Author
+
+        Inputs:
+            string: total user input at the console
+
+        Read CodeBook and Conventions.txt for detailed operation
+
+        returns nothing
+        sets self.positions with udpated locations"""
+
+         return
 
         
 
