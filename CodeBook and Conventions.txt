@@ -1,0 +1,277 @@
+A REVIEW OF GOOD CODING PRACTICE:
+
+1. OBEY DEPENDENCIES STRICTLY
+2. EXTRA SUB FUNCTIONS ARE OKAY, BUT PUT THEM NEAR WHERE THEY ARE USED FOR READABILITY
+3. GOOD VARIABLE NAMES LEADS TO LESS CONFUSION
+
+
+
+
+COMMANDS
+
+---------------------------------------------------------
+
+List of Console Commands:
+
+0. Help
+	Called by the prefix `help'
+
+1. Link
+	Called by the prefix `Link'
+2. Arm
+	Called by the prefix `Arm'
+3. Record
+	Called by the prefix `Wait'
+4. Open
+	Called by the prefix `Open'
+5. Close
+	Called by the prefix `Close'
+6. Run
+	Called by the prefix `Run'
+7. Calibrate
+	called by the prefix `Calibrate'
+8. Detect
+	called by the prefix `Detect'
+
+---------------------------------------------------------
+Help
+
+Prints out the usage of all the commands of the arm. Only works on exact input.
+
+help
+
+---------------------------------------------------------
+Link
+
+Executes a movement for 1 link specified by the input. Input formats detailed below. Inputs
+not matching the formats should fail gracefully (print error, go back to console). See below 
+conventions for interpreting relative and absolute position:
+
+Link Link# Value
+	Link# indicates the target link that we want to actuate. e.g. Link#=1 indicates we
+	are to move the bottom linkage.
+	
+	Value indicates the # of degrees that we want to move the arm left or right. Value
+	is allowed to be negative!
+
+Link Link# Value -abs
+	Link# is the same as above
+
+	With the optional flag -abs, Value is now interpreted as the absolute position to go
+	to.
+
+---------------------------------------------------------
+Arm
+
+Executes a movement for the entire arm. Input format detailed below. Inputs not matching the
+formats shoudld fail gracefully (print error, go back to console). See below conventions for
+interpreting relative and absolute position.
+
+Arm List-Of-Numbers
+	List-Of-Nubmers is a list of numbers seperated by spaces. Length of list is equal to
+	size of arm. Reject the input if the length is different. Moves each linkage by the
+	amount specified in the list (relative position)
+
+Arm List-Of-Numbers -abs
+	With optional flag -abs, the values are now used as absolute position.
+
+---------------------------------------------------------
+Record
+
+Records the current status of the arm, or records waits (meaning pause in motion). Saves data
+to the open file, throws error if file does not exist. Must follow data recording convention 
+noted below.
+
+Record
+	Records all the positions of the arm.
+
+Record Wait Time
+	Records a wait in the control sequence of length Time in milliseconds.
+
+---------------------------------------------------------
+Open
+
+Opens a file. Must be able to recognize proper input refuse to open non-csv files), and fail
+gracefully when unable to locate the specified file. Must also check to see if there is already
+a file open- rejects input if this is the case.
+
+Open FilePath
+	FilePath is the path to the desired file. If the file does not exist, create it. If it
+	does exist, must prompt user to choose to overwrite, or append to it.
+
+---------------------------------------------------------
+Close
+
+Closes the currently open file. Fails gracefully if no file is currently open. Input should be
+just the word Close, and nothing else. Reject input if it does not match.
+
+Close
+
+---------------------------------------------------------
+Run
+
+Runs the currently open file or runs the saved file at the specified path (okay to run even
+if there is an open file). By Run, we mean that it goes through the recorded path specified
+by the file. Blocks all standard user console commands while executing file, but has emergency
+abort command/function.
+
+Run
+	Runs the currently open file. Fail gracefully if nothing open. Should prompt user
+	to run `help' when failing.
+Run path
+	Run the file at path. Fail gracefully if file is wrong format, invalid input for
+	current arm configuration (e.g. file is for a 4-link arm, but currently only have
+	2 links), and if file does not exist.
+
+---------------------------------------------------------
+Calibrate
+
+Calibrates the linkages' various encoder positions. Can either calibrate all the links, or just
+specific links.
+
+Calibrate linkNumber
+	Forces the linkNumber-th link to calibrate. Disables operation until calibration is
+	complete. Must fail gracefully if linkNumber is out of range.
+
+Calibrate -all
+	Keyword -all changes the behavior to calibrate all the linkages along the arm (one at a
+	time!). Disables all other operations until calibration is complete. Should prompt user
+	with a warning that this operation may take a while before continuing with execution
+	(should have the ability to back out of the operation at this prompt).
+
+
+---------------------------------------------------------
+Detect
+
+Detects which linkages are on the arm. Prints out the list of linkage's i2c addressess in
+order of linkage position. Input must match exactly. Saves the detected positions to the
+internal position tracker.
+
+Detect
+
+---------------------------------------------------------
+
+
+
+INTERNAL VARIABLES
+
+
+
+---------------------------------------------------------
+For a full list and description of the persistent internal variables, consult the armObj
+doc-string. ALL PERSISTENT INTERNAL VARIABLES MUST BE OBJECT VARIABLES. DO NOT USE ANY GLOBAL
+VARIABLES.
+
+---------------------------------------------------------
+
+
+
+CONVENTIONS
+
+
+
+---------------------------------------------------------
+Relative and Absolute Position convention
+
+All motion is in units of degrees. 0 degrees absolute is treated as pointing straight (no 
+deviation from center). Giving negative relative input means to turn the other way.
+
+---------------------------------------------------------
+Data recording convention
+
+All data that is recorded and read by the arm are in .csv format. Rows in the file are comma 
+delimited, and represent a single arm state. Meaning, each row contains as many elements as
+there are linkages in the arm with 1 exception explained below. Each element is the absolute
+position of the linkage at the target position, and the element's index indicates the 
+corresponding linkage's position on the arm (first element = bottom linkage)
+
+The one exception to when the number of rows = number of elements is on `waits', i.e. when the
+arm is told to wait at a position for some time. This will be marked by having the first
+element be the keyword "WAIT" followed by exactly one more element in that row (row is of size
+two exactly). The second element indicates the amount of time to wait in milliseconds.
+
+---------------------------------------------------------
+
+
+
+ARDUINO COMMUNICATION PROTOCOL
+-Protocol
+-Codebook
+
+
+---------------------------------------------------------
+Protocol
+
+We communicate to the Arduino using i2c. There are two important fields that the Arduino must
+pick-up: The mode of operation, and the argument. This governs what the Arduino needs to do,
+and what the Arduino should return when asked for data.
+
+E.G. Suppose, we want to execute Link. It first has to be communicated that we want to execute
+the Link command, and then the Arduino needs to know how much it needs to move.
+
+Each i2c message therefore contains a prefix (or a header) that consists of a single letter.
+Looking up the letter in the codebook (see below), tells us what the intended command is.
+The rest of the message is the numeric argument for the command (can be null, i.e. message
+is one character long).
+
+E.G. The message l22 signfies that we are using the Link command, and we want to shift the
+linkage by 22 degrees.
+
+Note: Use `atoi()' to parse the numeric part of the message.
+
+---------------------------------------------------------
+Codebook:
+
+This codebook consists of all imaginable modes of operation that I can imagine. Feel free to
+add to it, if need be. However, push your codebook additions ASAP and pull request immediately
+so that others can see the expanded codebook. This is to avoid conflicts between people
+trying to add the same code.
+
+l = Link relative movement, return True when finished, False otherwise
+L = Link absolute movement, return True when finished, False otherwise
+r = Running Record, return current position
+d = Running Detect, return time since turned on (return millis())
+c = calibrate, return True when finished, False otherwise
+
+---------------------------------------------------------
+All functions and allowed dependencies.
+
+Below is a detailed list of all object methods and the hierarchy of dependency. An example of
+the format:
+
+funcX: funcY,funcZ
+
+The above means that method funcX is allowed to use funcY and funcZ as abstractions in funcX's
+implementation.
+
+-------------------
+
+__init__: posdetect
+
+posdetect: ping
+
+writeOneLink
+
+readOneLink
+
+writeArm: writeOneLink
+
+interpretCommand: Depends on all methods
+
+helpHelp
+
+link: writeOneLink
+
+arm: writeArm
+
+record: readOneLink
+
+openOpen
+
+close
+
+run: arm, readOneLink
+
+calibrate: writeOneLink, readOneLink
+
+detect: posdetect
