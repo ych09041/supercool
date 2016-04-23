@@ -126,7 +126,7 @@ class ArmObj:
 
     def readOneLink(self,address):
         ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Stephen Lu
 
         Input:
             address: the i2c address of the link to read from.
