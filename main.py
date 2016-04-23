@@ -108,22 +108,25 @@ class ArmObj:
             ## Call error printout function
             return
 
-        value = int(command[1:])
-        if value > self.linkMax:
-            print "Trying to move too far!"
-            value = self.linkMax
-        elif value < self.linkMin:
-            print "Trying to move too far!"
-            value = self.linkMin
-
-        newCommand = cmdChar + value
+        if len(command) > 1:
+            value = int(command[1:])
+            if value > self.linkMax:
+                print "Trying to move too far!"
+                value = self.linkMax
+            elif value < self.linkMin:
+                print "Trying to move too far!"
+                value = self.linkMin
+            newCommand = cmdChar + value
+        else:
+            newCommand = cmdChar
+            
         self.bus.write_byte(address, newCommand)
 
         return
 
     def readOneLink(self,address):
         ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Stephen Lu
 
         Input:
             address: the i2c address of the link to read from.
