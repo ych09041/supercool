@@ -389,7 +389,7 @@ class ArmObj:
         return
 
     def detect(self,string):
-         """Author
+        """Author: Cheng Hao Yuan
 
         Inputs:
             string: total user input at the console
@@ -398,8 +398,11 @@ class ArmObj:
 
         returns nothing
         sets self.positions with udpated locations"""
-
-         return
+        if string == "detect":
+            self.posDetect()
+        else:
+            print "Invalid command for detect."
+        return
 
         
 
