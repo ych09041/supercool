@@ -1,5 +1,6 @@
 import smbus
 import time
+import os
 bus = smbus.SMBus(1)
 
 ##slaveAddress = 0x05
@@ -179,7 +180,7 @@ class ArmObj:
         return
 
 
-    def DirectDrive(self,string):
+    def DirectDrive(self,):
         ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
         """Author:
 
@@ -300,6 +301,16 @@ class ArmObj:
         returns nothing
         sets self.file"""
 
+        parsedString = string.split()
+
+        if len(parsedString) > 1:
+            
+
+        if self.file is not None:
+            
+
+        
+
         return
 
     def close(self,string):
@@ -353,6 +364,16 @@ class ArmObj:
 
          return
 
+    def badInput(self)
+        """Author: Chenliu Stephen Lu
+
+        Inputs: None
+
+        Helper function for printing out a generic error message. Tells people to run 'help'
+
+        returns nothing"""
+
+        print "Bad input detected. Run 'help' for a list of commands"
         
 
 
