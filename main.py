@@ -207,10 +207,10 @@ class ArmObj:
             else:
                 print "ERROR: Target link is out of range"
 
-        else if parsedString[0] == "Arm":
+        elif parsedString[0] == "Arm":
             targetArmPosition = []
             try:
-                for val in parsedString[1:]):
+                for val in parsedString[1:]:
                     targetArmPosition.append(int(val))
             except ValueError:
                 print "ERROR: Gibberish input for 1 or more desired positions"
@@ -223,7 +223,7 @@ class ArmObj:
 
    
     def helpHelp(self, string):
-        """Author:
+        """Author:Yiran 
 
         Inputs:
             string: the user input string.
@@ -234,7 +234,78 @@ class ArmObj:
         returns nothing
         """
 
+        if len(string) > 5 :
+            print "ERROR: Type 'Help' for help"
 
+        else:
+            print "Help Manual"
+            print "Console Commands: \n 1.Link \n 2. Arm \n 3. Record \n 4. Open \n 5. Close \n 6. Run \n 7. Calibrate \n 8. Detect"
+        Num=input("Enter a number for comand help: ")
+
+        if Num == 1:
+            print "\n Link \n\n Executes a movement for 1 link specified by the input. Input formats detailed below. Inputs " \
+                  "not matching the formats should fail gracefully (print error, go back to console). " \
+                  "See belowconventions for interpreting relative and absolute position:" \
+                  "\n\n Link Link# Value" \
+                  "\n\t Link# indicates the target link that we want to actuate. e.g. Link#=1 indicates we are to move the bottom linkage. " \
+                  "Value indicates the # of degrees that we want to move the arm left or right. Value is allowed to be negative! " \
+                  "\n\n Link Link# Value -abs" \
+                  "\n\t Link# is the same as above" \
+                  "\n\t With the optional flag -abs, Value is now interpreted as the absolute position to go to."
+        elif Num == 2:
+            print "\n Arm \n\n Executes a movement for the entire arm. Input format detailed below. " \
+                  "Inputs not matching the formats shoudld fail gracefully (print error, go back to console). " \
+                  "See below conventions for interpreting relative and absolute position." \
+                  "\n\n Arm List-Of-Numbers" \
+                  "\n\t List-Of-Nubmers is a list of numbers seperated by spaces. Length of list is equal to size of arm. Reject the input if the length is different." \
+                  "Moves each linkage by the amount specified in the list (relative position)" \
+                  "\n\n Arm List-Of-Numbers -abs" \
+                  "\n\t With optional flag -abs, the values are now used as absolute position."
+        elif Num == 3:
+            print "\n Record \n\n Records the current status of the arm, or records waits (meaning pause in motion). " \
+                  "Saves data to the open file, throws error if file does not exist. Must follow data recording convention noted below. " \
+                  "\n\n Record" \
+                  "\n\t Records all the positions of the arm." \
+                  "\n\n Record Wait Time" \
+                  "\n\t Records a wait in the control sequence of length Time in milliseconds."
+        elif Num == 4:
+            print "\n Open \n\n Opens a file. Must be able to recognize proper input refuse to open non-csv files), " \
+                  "and fail gracefully when unable to locate the specified file. Must also check to see if there is already " \
+                  "a file open- rejects input if this is the case." \
+                  "\n\n Open FilePath" \
+                  "\n\t FilePath is the path to the desired file. If the file does not exist, create it. " \
+                  "If it does exist, must prompt user to choose to overwrite, or append to it."
+        elif Num == 5:
+            print "\n Close \n\n Closes the currently open file. Fails gracefully if no file is currently open. " \
+                  "Input should be just the word Close, and nothing else. Reject input if it does not match." \
+                  "\n\n Close"
+        elif Num == 6:
+            print "\n Run \n\n Runs the currently open file or runs the saved file at the specified path " \
+                  "(okay to run even if there is an open file). By Run, we mean that it goes through the recorded path specified " \
+                  "by the file. Blocks all standard user console commands while executing file, but has emergency abort command/function." \
+                  "\n\n Run" \
+                  "\n\tRuns the currently open file. Fail gracefully if nothing open. Should prompt user to run `help' when failing." \
+                  "\n\n Run path" \
+                  "\n\t Run the file at path. Fail gracefully if file is wrong format, invalid input for current arm configuration " \
+                  "(e.g. file is for a 4-link arm, but currently only have 2 links), and if file does not exist."
+        elif Num == 7:
+            print "\n Calibrate \n\n Calibrates the linkages' various encoder positions. Can either calibrate all the links, " \
+                  "or just specific links." \
+                  "\n\n Calibrate linkNumber" \
+                  "\n\t Forces the linkNumber-th link to calibrate. Disables operation until calibration is complete. " \
+                  "Must fail gracefully if linkNumber is out of range." \
+                  "\n\n Calibrate -all" \
+                  "\n\t Keyword -all changes the behavior to calibrate all the linkages along the arm (one at a	time!). " \
+                  "Disables all other operations until calibration is complete. Should prompt user with a warning that " \
+                  "this operation may take a while before continuing with execution " \
+                  "(should have the ability to back out of the operation at this prompt)."
+        elif Num == 8:
+            print "\n Detect \n\n Detects which linkages are on the arm. Prints out the list of linkage's i2c addressess in " \
+                  "order of linkage position. Input must match exactly. Saves the detected positions to the internal position tracker." \
+                  "\n\n Detect"
+        else :
+            print "Type 'Help' for the help manual and enter a number between 1 to 8 for help on console commands." \
+                  "\n Thank you!"            
         return
 
     def link(self, string):
@@ -261,7 +332,7 @@ class ArmObj:
         returns nothing
         """
 
-     def record(self,string):
+    def record(self,string):
         """Author:
 
         Does the back-end execution of the `Record' console command. Called when the first
