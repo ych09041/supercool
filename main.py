@@ -92,7 +92,7 @@ class ArmObj:
                 d = Running Detect, return time since turned on (return millis())
                 c = calibrate, return True when finished, False otherwise
             the number is the position setpoint.
-            
+
 
         Writes 'command' to the device at 'address' over i2c
 
@@ -101,10 +101,12 @@ class ArmObj:
         """
         if not command.isalnum():
             ## Call error printout function
+            return
 
         cmdChar = command[0]
         if cmdChar not in "lLrdc":
             ## Call error printout function
+            return
 
         value = int(command[1:])
         if value > self.linkMax:
@@ -116,7 +118,7 @@ class ArmObj:
 
         newCommand = cmdChar + value
         self.bus.write_byte(address, newCommand)
-        
+
         return
 
     def readOneLink(self,address):
