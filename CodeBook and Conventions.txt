@@ -13,6 +13,9 @@ COMMANDS
 
 List of Console Commands:
 
+0. Help
+	Called by the prefix `help'
+
 1. Link
 	Called by the prefix `Link'
 2. Arm
@@ -29,6 +32,13 @@ List of Console Commands:
 	called by the prefix `Calibrate'
 8. Detect
 	called by the prefix `Detect'
+
+---------------------------------------------------------
+Help
+
+Prints out the usage of all the commands of the arm. Only works on exact input.
+
+help
 
 ---------------------------------------------------------
 Link
@@ -171,9 +181,9 @@ Data recording convention
 
 All data that is recorded and read by the arm are in .csv format. Rows in the file are comma 
 delimited, and represent a single arm state. Meaning, each row contains as many elements as
-there are linkages in the arm with 1 exception explained below. Each element is the encoder
-reading of the target position, and the element's index indicates the corresponding linkage's
-position on the arm (first element = bottom linkage)
+there are linkages in the arm with 1 exception explained below. Each element is the absolute
+position of the linkage at the target position, and the element's index indicates the 
+corresponding linkage's position on the arm (first element = bottom linkage)
 
 The one exception to when the number of rows = number of elements is on `waits', i.e. when the
 arm is told to wait at a position for some time. This will be marked by having the first
@@ -222,3 +232,46 @@ L = Link absolute movement, return True when finished, False otherwise
 r = Running Record, return current position
 d = Running Detect, return time since turned on (return millis())
 c = calibrate, return True when finished, False otherwise
+
+---------------------------------------------------------
+All functions and allowed dependencies.
+
+Below is a detailed list of all object methods and the hierarchy of dependency. An example of
+the format:
+
+funcX: funcY,funcZ
+
+The above means that method funcX is allowed to use funcY and funcZ as abstractions in funcX's
+implementation.
+
+-------------------
+
+__init__: posdetect
+
+posdetect: ping
+
+writeOneLink
+
+readOneLink
+
+writeArm: writeOneLink
+
+interpretCommand: Depends on all methods
+
+helpHelp
+
+link: writeOneLink
+
+arm: writeArm
+
+record: readOneLink
+
+openOpen
+
+close
+
+run: arm, readOneLink
+
+calibrate: writeOneLink, readOneLink
+
+detect: posdetect
