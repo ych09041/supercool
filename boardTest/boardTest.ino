@@ -29,14 +29,14 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(LED_G,LOW);
+  digitalWrite(LED_G,HIGH);
   digitalWrite(LED_R,LOW);
   digitalWrite(LED_B,LOW);
   motor_forward_raw(0.2);
   delay(2000);
   digitalWrite(LED_G,LOW);
-  digitalWrite(LED_R,LOW);
-  digitalWrite(LED_B,LOW);
+  digitalWrite(LED_R,HIGH);
+  digitalWrite(LED_B,HIGH);
   motor_reverse_raw(0.2);
   delay(2000);
   
