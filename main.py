@@ -140,7 +140,7 @@ class ArmObj:
 
     def interpretCommand(self,string):
         ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Cheng Hao Yuan
 
         Input:
             string: the user inputted string at the console
@@ -150,35 +150,56 @@ class ArmObj:
 
         returns nothing.
         """
+        ## bring all input to lower case
+        string = string.lower()
 
-        if string == "Idle":
-            self.mode = "Idle"
-            print "Arm is now in Idle mode"
-            return
-        if string == "Direct Drive":
-            self.mode = "Direct Drive"
-            print "Arm is now in Direct Drive mode"
-            return
-        if string == "Record":
+        ## help
+        if string.startswith("help"):
+            self.helpHelp(string)
+            
+        ## link (single link drive)
+        elif string.startswith("link"):
+            self.link(string)
+
+        ## arm (arm drive)
+        elif string.startswith("arm"):
+            self.arm(string)
+
+        ## record
+        elif string.startswith("record"):
             self.mode = "Record"
             print "Arm is now in Record mode. Linkage calibration", \
                 "is recommended before recording any motions."
-            return
+            self.record(string)
+            
+        ## open (open csv file)
+        elif string.startswith("open"):
+            self.openOpen(string)
 
+        ## close (close csv file)
+        elif string.startswith("close"):
+            self.close(string)
 
+        ## run
+        elif string.startswith("run"):
+            self.run(string)
 
+        ## calibrate
+        elif string.startswith("calibrate"):
+            self.calibrate(string)
 
-        if self.mode == "Direct Drive":
-            self.DirectDrive(string)
-            return
-        if self.mode == "Record":
-            self.Record(string)
-            return
-
-
+        ## detect
+        elif string.startswith("detect"):
+            self.calibrate(string)
+            
+        ## no match found (invalid command you need help)
+        else:
+            print "Invalid command.", \
+            "Please type \"help\" to see the operation manual."
+            
         return
 
-
+''' ## DEPRICATED
     def DirectDrive(self,string):
         ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
         """Author:
@@ -220,7 +241,7 @@ class ArmObj:
         else:
             print "ERROR: Gibberish input"
             return
-
+'''
    
     def helpHelp(self, string):
         """Author:
@@ -238,7 +259,7 @@ class ArmObj:
         return
 
     def link(self, string):
-        """Author:
+        """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
             string: the user input string
@@ -248,9 +269,23 @@ class ArmObj:
 
         returns nothing
         """
+        parsedString = string.split()
+        if len(parsedString) == 3 and parsedString[0] == "link":
+            try:
+                linkNumber = int(parsedString[1])
+                targetPosition = int(parsedString[2])
+            except ValueError:
+                print "ERROR: Gibberish input for link number and/or desired position"
+                return
+            if len(self.positions) >= linkNumber and linkNumber >= 0:
+                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
+            else:
+                print "ERROR: Target link is out of range"
+        return
+            
 
     def arm(self, string):
-        """Author:
+        """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
             string: the user input string
@@ -260,6 +295,19 @@ class ArmObj:
 
         returns nothing
         """
+
+        parsedString = string.split()
+        if parsedString[0] == "Arm":
+            targetArmPosition = []
+            try:
+                for val in parsedString[1:]):
+                    targetArmPosition.append(int(val))
+            except ValueError:
+                print "ERROR: Gibberish input for 1 or more desired positions"
+                return
+            self.writeArm(targetArmPosition)
+        return
+    
 
      def record(self,string):
         """Author:
