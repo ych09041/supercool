@@ -78,28 +78,46 @@ class ArmObj:
 
 
 
-    def writeOneLink(self,address,value):
+    def writeOneLink(self,address,command):
         ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
             address: i2c address to be written to
-            value: the value to write to that address. Not necessarily numeric.
+            command: the command to write to the addressed slave. Not necessarily numeric.
+            command will a letter followed by a number (no space in between). The letter cmdChar can be:
+                l = Link relative movement, return True when finished, False otherwise
+                L = Link absolute movement, return True when finished, False otherwise
+                r = Running Record, return current position
+                d = Running Detect, return time since turned on (return millis())
+                c = calibrate, return True when finished, False otherwise
+            the number is the position setpoint.
+            
 
-        Writes 'value' to the device at 'address' over i2c
+        Writes 'command' to the device at 'address' over i2c
 
         returns nothing
 
         """
+        if not command.isalnum():
+            ## Call error printout function
+
+        cmdChar = command[0]
+        if cmdChar not in "lLrdc":
+            ## Call error printout function
+
+        value = int(command[1:])
         if value > self.linkMax:
             print "Trying to move too far!"
-            self.bus.write_byte(address, self.linkMax)
-        if value < self.linkMin:
+            value = self.linkMax
+        elif value < self.linkMin:
             print "Trying to move too far!"
-            self.bus.write_byte(address, self.linkMin)
-        else:
-            self.bus.write_byte(address, value)
-        return -1
+            value = self.linkMin
+
+        newCommand = cmdChar + value
+        self.bus.write_byte(address, newCommand)
+        
+        return
 
     def readOneLink(self,address):
         ##NEEDS TO BE UPDATED
