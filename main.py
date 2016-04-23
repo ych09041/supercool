@@ -22,8 +22,8 @@ class ArmObj:
         file = the csv file of positions that we are reading
 
         """
-        
-        
+
+
         self.bus = busLine
         self.positions = []
         self.errorState = False
@@ -56,18 +56,18 @@ class ArmObj:
             self.positions.append(addressBook[i][0])
         self.errorState = False
         return
-        
+
     def ping(self,address):
         ##NEEDS TO BE UPDATED
         """Author:
 
         Input:
             address: the i2c address to ping
-    
+
         Pings the given i2c address. Returns the millis() of the Arduino if it is there,
         returns -1 otherwise"""
-                                   
-        
+
+
         try:
             bus.write_byte(address,-1)
             number = bus.read_byte(address)
@@ -76,7 +76,7 @@ class ArmObj:
             return -1
 
 
-        
+
 
     def writeOneLink(self,address,value):
         ##NEEDS TO BE UPDATED
@@ -122,13 +122,13 @@ class ArmObj:
         """Author:
 
         Input:
-            lis: a list of integers, 
+            lis: a list of integers,
         Writes each element of lis to the corresponding linkage by position ordering.
         Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
 
         returns nothing
         """
-        
+
         if len(lis) > len(self.positions):
             print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
         if len(lis) < len(self.positions):
@@ -146,7 +146,7 @@ class ArmObj:
             string: the user inputted string at the console
 
         Interprets user commands and calls the correct method. Pass the methods "string"
-        Refer to Codebook and Conventions.txt for dictionary of operations. 
+        Refer to Codebook and Conventions.txt for dictionary of operations.
 
         returns nothing.
         """
@@ -156,7 +156,7 @@ class ArmObj:
         ## help
         if string.startswith("help"):
             self.helpHelp(string)
-            
+
         ## link (single link drive)
         elif string.startswith("link"):
             self.link(string)
@@ -171,7 +171,7 @@ class ArmObj:
             print "Arm is now in Record mode. Linkage calibration", \
                 "is recommended before recording any motions."
             self.record(string)
-            
+
         ## open (open csv file)
         elif string.startswith("open"):
             self.openOpen(string)
@@ -191,15 +191,15 @@ class ArmObj:
         ## detect
         elif string.startswith("detect"):
             self.calibrate(string)
-            
+
         ## no match found (invalid command you need help)
         else:
             print "Invalid command.", \
             "Please type \"help\" to see the operation manual."
-            
-        return
 
-''' ## DEPRICATED
+        return
+    '''
+    ## DEPRICATED
     def DirectDrive(self,string):
         ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
         """Author:
@@ -241,8 +241,8 @@ class ArmObj:
         else:
             print "ERROR: Gibberish input"
             return
-'''
-   
+    '''
+
     def helpHelp(self, string):
         """Author:
 
@@ -282,7 +282,7 @@ class ArmObj:
             else:
                 print "ERROR: Target link is out of range"
         return
-            
+
 
     def arm(self, string):
         """Author: Cheng Hao Yuan, Stephen Lu
@@ -300,21 +300,21 @@ class ArmObj:
         if parsedString[0] == "Arm":
             targetArmPosition = []
             try:
-                for val in parsedString[1:]):
+                for val in parsedString[1:]:
                     targetArmPosition.append(int(val))
             except ValueError:
                 print "ERROR: Gibberish input for 1 or more desired positions"
                 return
             self.writeArm(targetArmPosition)
         return
-    
 
-     def record(self,string):
+
+    def record(self,string):
         """Author:
 
         Does the back-end execution of the `Record' console command. Called when the first
         word in string is "Record".
-        
+
         Inputs:
             string: total user input at the console in string format
 
@@ -325,14 +325,14 @@ class ArmObj:
                 Please note to follow the data recording convention
         Errors:
             Bad input- extra words/numbers in string
-            
+
             self.file is closed or does not exist. Should print error statement
                 instead of failing.
-            
+
         Returns:
             Nothing"""
 
-        
+
         return
 
     def openOpen(self,string):
@@ -385,7 +385,7 @@ class ArmObj:
 
         returns nothing
         set points on the Arduino end should change"""
-    
+
         return
 
     def detect(self,string):
@@ -404,7 +404,6 @@ class ArmObj:
             print "Invalid command for detect."
         return
 
-        
 
 
 arm = ArmObj(bus)
