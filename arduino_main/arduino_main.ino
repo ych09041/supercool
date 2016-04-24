@@ -1,6 +1,9 @@
 #include <Wire.h>
 #include <PID_v1.h>
 
+#define TICKS_PER_DEGREE 2.17
+#define DEGREES_PER_TICK 1.0/TICKS_PER_DEGREE
+
 // button switch pins
 #define BUTTON_L 0
 #define BUTTON_R 1
@@ -48,7 +51,7 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 // Velocity Computation Variables
 volatile signed long encoder0Pos = 0;
 unsigned long lastTime, currTime;
-double currPos, lastPos, velocity, ticktodeg;
+double currPos, lastPos, velocity;
 int SampleTime = 500; //500  msec
 
 void setup() {
@@ -108,7 +111,6 @@ void setup() {
   attachInterrupt(0, doEncoderA, CHANGE);
 
   currPos, lastPos, velocity  = 0;
-  ticktodeg = 1.0 /2.0;
   
   Serial.println("Ready!");
 
@@ -125,7 +127,7 @@ bool isAtPosition(){
 void loop() {
   // put your main code here, to run repeatedly:
 
-  currPos = encoder0Pos * ticktodeg;
+  currPos = encoder0Pos * DEGREES_PER_TICK;
   currTime = millis();
 
   if (Serial.available() > 0) {
@@ -239,10 +241,22 @@ void interp() {
 
 void calibrate() {
   Serial.println("Start calibration...");
+  myPID.SetMode(MANUAL);
+  int count_loop = 0;
   while((!digitalRead(BUTTON_L)) && (!digitalRead(BUTTON_R))) {
-    
+    motor_forward_raw(0.2);
+    delay(100);
+    motor_brake_raw();
+    delay(100);
+    if (count_loop % 10 == 0) Serial.println("Moving...");
   }
-  
+  encoder0Pos = 45.0 * TICKS_PER_DEGREE;
+  currPos = 45.0;
+  Input = currPos;
+  myPID.SetMode(AUTOMATIC);
+  Setpoint = 0.0;
+  delay(1000);
+  Serial.println("Calibrated.");  
 }
 
 //---------------------------------------------------------------
@@ -266,7 +280,6 @@ void sendTime() {
   if (sendIndex > 3) {
     sendIndex = 0;
   }
-  
 }
 
 int sendPosTemp;
@@ -277,8 +290,7 @@ void sendPos() {
   sendIndex++;
   if (sendIndex > 1) {
     sendIndex = 0;
-  }
-    
+  } 
 }
 
 //---------------------------------------------------------------
