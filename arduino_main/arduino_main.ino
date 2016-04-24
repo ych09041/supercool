@@ -54,6 +54,9 @@ unsigned long lastTime, currTime;
 double currPos, lastPos, velocity;
 int SampleTime = 500; //500  msec
 
+char i2cmotorpwm[4];
+int i;
+
 void setup() {
   
   Serial.begin(115200);
@@ -89,9 +92,7 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
-  Serial.println("Calibrating...");
-  calibrate();
-  
+
   Input = 0;
   Setpoint = 0; // degrees
 
@@ -111,7 +112,10 @@ void setup() {
   attachInterrupt(0, doEncoderA, CHANGE);
 
   currPos, lastPos, velocity  = 0;
-  
+
+  Serial.println("Initial calibration...");
+  calibrate();
+    
   Serial.println("Ready!");
 
   
@@ -123,7 +127,6 @@ bool isAtPosition(){
 }
 
 
-
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -131,17 +134,45 @@ void loop() {
   currTime = millis();
 
   if (Serial.available() > 0) {
-    // read the incoming byte:
-    incomingByte = Serial.read();
+    
+//    // read the incoming byte:
+//    incomingByte = Serial.read();
+//
+//    if (incomingByte == 97) {
+//      Setpoint = currPos + 2.0;
+//      incomingByte = 0;
+//    }
+//    if (incomingByte == 100) {
+//      Setpoint = currPos - 2.0;
+//      incomingByte = 0;
+//    }
 
-    if (incomingByte == 97) {
-      Setpoint = currPos + 2.0;
-      incomingByte = 0;
+
+
+    //Serial mockup of I2C
+
+    
+    int i = 0;
+    while(Serial.available()) {
+      if (i == 0) {
+        mode = Serial.read();
+        Serial.print("Mode received: ");
+        Serial.println(mode);
+      } else {
+        i2cmotorpwm[i-1] = Serial.read();
+        Serial.print("Number received: ");
+        Serial.println(i2cmotorpwm[i-1]);
+      }
+      i++;
     }
-    if (incomingByte == 100) {
-      Setpoint = currPos - 2.0;
-      incomingByte = 0;
-    }
+    interp();
+  
+
+
+
+
+
+
   }
 
   // check buttons for manual move
@@ -193,8 +224,7 @@ void loop() {
 
 //------------------------------------------------------------
 
-char i2cmotorpwm[4];
-int i;
+
 // callback for received data
 void receiveData(int byteCount) {
   i = 0;
