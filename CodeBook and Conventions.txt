@@ -91,7 +91,7 @@ Record Wait Time
 ---------------------------------------------------------
 Open
 
-Opens a file. Must be able to recognize proper input refuse to open non-csv files), and fail
+Opens a file. Must be able to recognize proper input (refuse to open non-csv files), and fail
 gracefully when unable to locate the specified file. Must also check to see if there is already
 a file open- rejects input if this is the case.
 
@@ -103,7 +103,7 @@ Open FilePath
 Close
 
 Closes the currently open file. Fails gracefully if no file is currently open. Input should be
-just the word Close, and nothing else. Reject input if it does not match.
+just the word Close, and nothing else. Reject input if it does not match. 
 
 Close
 
@@ -188,7 +188,7 @@ corresponding linkage's position on the arm (first element = bottom linkage)
 The one exception to when the number of rows = number of elements is on `waits', i.e. when the
 arm is told to wait at a position for some time. This will be marked by having the first
 element be the keyword "WAIT" followed by exactly one more element in that row (row is of size
-two exactly). The second element indicates the amount of time to wait in milliseconds.
+two exactly). The second element indicates the amount of time to wait in milliseconds. 
 
 ---------------------------------------------------------
 
@@ -250,28 +250,30 @@ __init__: posdetect
 
 posdetect: ping
 
-writeOneLink
+writeOneLink: badInput
 
-readOneLink
+readOneLink: badInput
 
-writeArm: writeOneLink
+writeArm: writeOneLink,badInput
 
-interpretCommand: Depends on all methods
+interpretCommand: Depends on all methods, badInput
 
-helpHelp
+helpHelp: badInput
 
-link: writeOneLink
+link: writeOneLink, badInput
 
-arm: writeArm
+arm: writeArm, badInput
 
-record: readOneLink
+record: readOneLink, badInput
 
-openOpen
+openOpen: badInput
 
-close
+close: badInput
 
-run: arm, readOneLink
+run: arm, readOneLink, badInput
 
-calibrate: writeOneLink, readOneLink
+calibrate: writeOneLink, readOneLink, badInput
 
-detect: posdetect
+detect: posdetect, badInput
+
+badInput
