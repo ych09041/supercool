@@ -208,10 +208,10 @@ class ArmObj:
             else:
                 print "ERROR: Target link is out of range"
 
-        else if parsedString[0] == "Arm":
+        elif parsedString[0] == "Arm":
             targetArmPosition = []
             try:
-                for val in parsedString[1:]):
+                for val in parsedString[1:]:
                     targetArmPosition.append(int(val))
             except ValueError:
                 print "ERROR: Gibberish input for 1 or more desired positions"
@@ -262,7 +262,7 @@ class ArmObj:
         returns nothing
         """
 
-     def record(self,string):
+    def record(self,string):
         """Author:
 
         Does the back-end execution of the `Record' console command. Called when the first
@@ -303,15 +303,38 @@ class ArmObj:
 
         parsedString = string.split()
 
-        if len(parsedString) > 1:
-            
-
+        if len(parsedString) > 2:
+            self.badInput()
+            return  
         if self.file is not None:
-            
+            print "There's already a file open; please close it before opening another"
+            return
+        if not parsedString[1].endswith('.csv'):
+            print "File path needs to end in \'.csv\'"
+            return
+        else:
+            if os.path.isfile(parsedString[0]):
+                userInput = raw_input("Specified file already exists. (O)verwrite or (A)ppend? ")
+                if userInput == "O" or userInput == "o":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                elif userInput == "A" or userInput == "a":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                else:
+                    self.badInput()
+                    return
+            else:
+                return
+                
+                
 
-        
-
-        return
 
     def close(self,string):
         """Author:
@@ -364,7 +387,7 @@ class ArmObj:
 
          return
 
-    def badInput(self)
+    def badInput(self):
         """Author: Chenliu Stephen Lu
 
         Inputs: None
@@ -373,7 +396,7 @@ class ArmObj:
 
         returns nothing"""
 
-        print "Bad input detected. Run 'help' for a list of commands"
+        print "Bad input detected. Run 'help' for a list of commands."
         
 
 
