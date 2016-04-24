@@ -140,6 +140,7 @@ class ArmObj:
         number = self.bus.read_byte(address)
         return number
 
+    '''
     def writeArm(self,lis):
         ##NEEDS TO BE UPDATED
         """Author:
@@ -160,6 +161,7 @@ class ArmObj:
             for i in range(0,len(lis)):
                 self.writeOneLink(self.positions[i], lis[i])
         return
+    '''
 
     def interpretCommand(self,string):
         ##NEEDS TO BE UPDATED
@@ -406,7 +408,7 @@ class ArmObj:
             commandChar = "L"
         else:
             self.badInput()
-
+    
         setpointList = parsedString[1:-2]
         if not len(setpointList) == len(self.positions):
             print("Wrong number of position arguments")
@@ -414,6 +416,9 @@ class ArmObj:
 
         linkIndex = 0
         for setpoint in setpointList:
+            if not setpoint.isnumeric():
+                print("invalid position setpoint input")
+                return
             self.writeOneLink(self.positionsp[linkIndex], commandChar+setpoint)
             linkIndex += 1
 
