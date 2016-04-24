@@ -108,6 +108,13 @@ void setup() {
   
 }
 
+bool isAtPosition(){
+  return abs(currPos - Setpoint) <0.5;
+  
+}
+
+
+
 void loop() {
   // put your main code here, to run repeatedly:
 
@@ -131,7 +138,7 @@ void loop() {
   Input = currPos;
   myPID.Compute();
 
-  if isAtPosition(){
+  if (isAtPosition()) {
     if (Output > 0) {
       val = myMap(Output, 0, maxPoint, 0, 1.0);
       motor_forward_raw(val);
@@ -144,7 +151,7 @@ void loop() {
     }
   }
   else{
-    motor_brake_raw()
+    motor_brake_raw();
   }
 
   
@@ -165,33 +172,34 @@ void loop() {
 /*
  * If within 0.5 degrees to final destination we are at final position
  */
-void isAtPosition(){
-  return abs(currPos - Setpoint) <0.5
-  
-}
+
 
 
 //------------------------------------------------------------
 
-char i2cRead[4];
+char i2cVal[4];
 int i;
 // callback for received data
 void receiveData(int byteCount) {
   i = 0;
   while(Wire.available()) {
-    i2cRead[i] = Wire.read();
-    Serial.print("data received: ");
-    Serial.println(i2cRead[i]);
+    if (i == 0) {
+      mode = Wire.read();
+      Serial.print("Mode received: ");
+      Serial.println(mode);
+    } else {
+      i2cVal[i-1] = Wire.read();
+      Serial.print("Number received: ");
+      Serial.println(i2cVal[i-1]);
+    }
     i++;
   }
-
-  mode = i2cRead[0];
   interp();
 }
 
 
 // callback for sending data
-int writeIndex = 0;
+int sendIndex = 0;
 void sendData() {
   if (mode == 'c' || mode == 'l' || mode == 'L') {
     sendReady();
@@ -212,6 +220,7 @@ void interp() {
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
+    Setpoint = atof(i2cVal);
     
   } else if (mode == 'L') {
     
@@ -219,22 +228,43 @@ void interp() {
 }
 
 void calibrate() {
-  
+  Serial.println("calibrate:PLACEHOLDER");
 }
 
 //---------------------------------------------------------------
 //Abstracted functions for sending data
 
 void sendReady() {
-  
+  if (isAtPosition()) {
+    Wire.write(1);  
+  } else {
+    Wire.write(0);
+  }
 }
 
+
+int sendTimeTemp;
 void sendTime() {
+  sendTimeTemp = millis();
+  sendTimeTemp = (sendTimeTemp >> (8*sendIndex)) & 0xff;
+  Wire.write(sendTimeTemp);
+  sendIndex++;
+  if (sendIndex > 3) {
+    sendIndex = 0;
+  }
   
 }
 
+int sendPosTemp;
 void sendPos() {
-  
+  sendPosTemp = (int) currPos;
+  sendPosTemp = (sendPosTemp >> (8*sendIndex)) & 0xff;
+  Wire.write(sendPosTemp);
+  sendIndex++;
+  if (sendIndex > 1) {
+    sendIndex = 0;
+  }
+    
 }
 
 //---------------------------------------------------------------
