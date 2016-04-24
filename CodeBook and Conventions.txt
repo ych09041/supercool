@@ -250,28 +250,30 @@ __init__: posdetect
 
 posdetect: ping
 
-writeOneLink
+writeOneLink: badInput
 
-readOneLink
+readOneLink: badInput
 
-writeArm: writeOneLink
+writeArm: writeOneLink,badInput
 
-interpretCommand: Depends on all methods
+interpretCommand: Depends on all methods, badInput
 
-helpHelp
+helpHelp: badInput
 
-link: writeOneLink
+link: writeOneLink, badInput
 
-arm: writeArm
+arm: writeArm, badInput
 
-record: readOneLink
+record: readOneLink, badInput
 
-openOpen
+openOpen: badInput
 
-close
+close: badInput
 
-run: arm, readOneLink
+run: arm, readOneLink, badInput
 
-calibrate: writeOneLink, readOneLink
+calibrate: writeOneLink, readOneLink, badInput
 
-detect: posdetect
+detect: posdetect, badInput
+
+badInput

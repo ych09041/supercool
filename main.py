@@ -1,5 +1,6 @@
 import smbus
 import time
+import os
 bus = smbus.SMBus(1)
 
 ##slaveAddress = 0x05
@@ -219,6 +220,7 @@ class ArmObj:
         else:
             print "Invalid command.", \
             "Please type \"help\" to see the operation manual."
+
 
         return
     '''
@@ -480,7 +482,40 @@ class ArmObj:
         returns nothing
         sets self.file"""
 
-        return
+        parsedString = string.split()
+
+        if len(parsedString) > 2:
+            self.badInput()
+            return  
+        if self.file is not None:
+            print "There's already a file open; please close it before opening another"
+            return
+        if not parsedString[1].endswith('.csv'):
+            print "File path needs to end in \'.csv\'"
+            return
+        else:
+            if os.path.isfile(parsedString[0]):
+                userInput = raw_input("Specified file already exists. (O)verwrite or (A)ppend? ")
+                if userInput == "O" or userInput == "o":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                elif userInput == "A" or userInput == "a":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                else:
+                    self.badInput()
+                    return
+            else:
+                return
+                
+                
+
 
     def close(self,string):
         """Author:
@@ -535,6 +570,19 @@ class ArmObj:
         else:
             print "Invalid command for detect."
         return
+
+
+    def badInput(self):
+        """Author: Chenliu Stephen Lu
+
+        Inputs: None
+
+        Helper function for printing out a generic error message. Tells people to run 'help'
+
+        returns nothing"""
+
+        print "Bad input detected. Run 'help' for a list of commands."
+        
 
 
 
