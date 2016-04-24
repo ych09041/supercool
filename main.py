@@ -1,5 +1,6 @@
 import smbus
 import time
+import os
 bus = smbus.SMBus(1)
 
 ##slaveAddress = 0x05
@@ -100,12 +101,12 @@ class ArmObj:
 
         """
         if not command.isalnum():
-            ## Call error printout function
+            self.badInput()
             return
 
         cmdChar = command[0]
         if cmdChar not in "lLrdc":
-            ## Call error printout function
+            self.badInput()
             return
 
         if len(command) > 1:
@@ -173,8 +174,8 @@ class ArmObj:
 
         returns nothing.
         """
-        ## bring all input to lower case
-        string = string.lower()
+        ## bring all input to lower case and strip leading/trailing whitespaces
+        string = string.lower().strip()
 
         ## help
         if string.startswith("help"):
@@ -219,6 +220,7 @@ class ArmObj:
         else:
             print "Invalid command.", \
             "Please type \"help\" to see the operation manual."
+
 
         return
     '''
@@ -390,25 +392,22 @@ class ArmObj:
         returns nothing
         """
 
-        parsedString = string.split()
-        if parsedString[0] == "Arm":
-            targetArmPosition = []
-            try:
-                for val in parsedString[1:]:
-                    targetArmPosition.append(int(val))
-            except ValueError:
-                print "ERROR: Gibberish input for 1 or more desired positions"
-                return
-            self.writeArm(targetArmPosition)
-        return
-
-
     def record(self,string):
-        """Author:
+        """Author: Chris Berthelet
 
         Does the back-end execution of the `Record' console command. Called when the first
         word in string is "Record".
+        
+        Records the current status of the arm, or records waits (meaning pause in motion). Saves data
+        to the open file, throws error if file does not exist. Must follow data recording convention 
+        noted below.
 
+        Record
+        Records all the positions of the arm.
+
+        Record Wait Time
+        Records a wait in the control sequence of length Time in milliseconds.
+        
         Inputs:
             string: total user input at the console in string format
 
@@ -425,8 +424,68 @@ class ArmObj:
 
         Returns:
             Nothing"""
-
-
+        
+        ## Read in string and check if "Record" or if "Record Wait time"
+        
+        ## case insensitive
+        string = string.lower()
+        ## create array of all words in string that are separated by spaces
+        stringArray = string.split()
+        ## count how many words are in the array 
+        numberOfWords = len(stringArray)
+        
+        if numberOfWords == 1:
+            ## this means that the only word is "Record" and thus a whole line is recorded    
+            theFile = self.file
+            ## moves to the end of the .csv file
+            theFile.seek(0,2)
+            
+            addressLinks = self.positions
+            
+            absPositions = ""
+            
+            for i in range(0,len(addressLinks)-1): 
+                
+                ## write to Arduino to recieve position feedback for each link
+                self.writeOneLink(add1,"r")
+                
+                if i == len(addressLinks)-1:   
+                    ## append the position to the array without comma because last value in row
+                    absPositions = absPositions + str(self.readOneLink(add1))
+                else:
+                    ## append the position to the array with comma
+                    absPositions = absPositions + str(self.readOneLink(add1)) + ","
+            ## adds the row of ABS positions
+            theFile.write(absPositions + '\n')
+        
+        elif numberOfWords <= 3:
+            ## this means that the input may be "Record Wait" or some invalid input
+            if stringArray[1] == "wait":
+                
+                if stringArray[2].isnumeric() == True:
+                    ## this means the third input is a valid wait time (ms)
+                    
+                    ## this means that the only word is "Record" and thus a whole line is recorded    
+                    theFile = self.file
+                    ## moves to the end of the .csv file
+                    theFile.seek(0,2)
+                    
+                    waitTime = stringArray[2]
+                    waitString = "WAIT," + waitTime
+                    
+                    ## adds the row with WAIT and the amount of time in (ms)
+                    theFile.write(waitString + '\n')
+                    
+                else:
+                    print "INVALID INPUT FOR WAIT TIME"
+            
+            else:
+                print "INVALID INPUT"
+            
+        else:
+            ## this means there are too many inputs
+            print "TOO MANY INPUTS"
+            
         return
 
     def openOpen(self,string):
@@ -442,7 +501,40 @@ class ArmObj:
         returns nothing
         sets self.file"""
 
-        return
+        parsedString = string.split()
+
+        if len(parsedString) > 2:
+            self.badInput()
+            return  
+        if self.file is not None:
+            print "There's already a file open; please close it before opening another"
+            return
+        if not parsedString[1].endswith('.csv'):
+            print "File path needs to end in \'.csv\'"
+            return
+        else:
+            if os.path.isfile(parsedString[0]):
+                userInput = raw_input("Specified file already exists. (O)verwrite or (A)ppend? ")
+                if userInput == "O" or userInput == "o":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                elif userInput == "A" or userInput == "a":
+                    try:
+                        self.file = open(parsedString[0], 'w+')
+                    except IOError:
+                        print "Permission denied to open the file. Operation aborted."
+                    return
+                else:
+                    self.badInput()
+                    return
+            else:
+                return
+                
+                
+
 
     def close(self,string):
         """Author:
@@ -482,7 +574,7 @@ class ArmObj:
                 self.writeArm(map(int,arr))
 
     def calibrate(self,string):
-        """Author
+        """Author: Yiran
 
         Inputs:
             string: total user input at the console
@@ -491,7 +583,26 @@ class ArmObj:
 
         returns nothing
         set points on the Arduino end should change"""
-
+        ## split the input string into array
+        InputArray = string.split()
+        
+        ## Validate inputs
+        if InputArray[0] == "calibrate":
+            pass
+        elif len(InputArray) <= 2:
+            pass
+        else:
+            self.badInput()
+            
+        if InputArray[1] == "-all":
+            ## Calibrate all
+            for x in self.positions:
+                self.writeOneLink(x,'c')
+        elif len(self.positions) >= int(InputArray[1]):
+            ## Calibrate certain link
+            self.writeOneLink(self.positions[int(InputArray[1])-1],'c')
+        else:
+            self.badInput()
         return
 
     def detect(self,string):
@@ -509,6 +620,19 @@ class ArmObj:
         else:
             print "Invalid command for detect."
         return
+
+
+    def badInput(self):
+        """Author: Chenliu Stephen Lu
+
+        Inputs: None
+
+        Helper function for printing out a generic error message. Tells people to run 'help'
+
+        returns nothing"""
+
+        print "Bad input detected. Run 'help' for a list of commands."
+        
 
 
 
