@@ -470,7 +470,7 @@ class ArmObj:
         return
 
     def calibrate(self,string):
-        """Author
+        """Author: Yiran
 
         Inputs:
             string: total user input at the console
@@ -479,7 +479,26 @@ class ArmObj:
 
         returns nothing
         set points on the Arduino end should change"""
-
+        ## split the input string into array
+        InputArray = string.split()
+        
+        ## Validate inputs
+        if InputArray[0] == "calibrate":
+            pass
+        elif len(InputArray) <= 2:
+            pass
+        else:
+            self.badInput()
+            
+        if InputArray[1] == "-all":
+            ## Calibrate all
+            for x in self.positions:
+                self.writeOneLink(x,'c')
+        elif len(self.positions) >= int(InputArray[1]):
+            ## Calibrate certain link
+            self.writeOneLink(self.positions[int(InputArray[1])-1],'c')
+        else:
+            self.badInput()
         return
 
     def detect(self,string):
