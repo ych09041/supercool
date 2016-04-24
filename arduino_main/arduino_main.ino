@@ -185,7 +185,8 @@ void receiveData(int byteCount) {
     i++;
   }
 
-  mode = i2cRead[0]
+  mode = i2cRead[0];
+  interp();
 }
 
 
@@ -203,7 +204,40 @@ void sendData() {
   }
 }
 
+//---------------------------------------------------------------
+//Abstracted functions for doing command interperation
 
+
+void interp() {
+  if (mode == 'c') {
+    calibrate();
+  } else if (mode == 'l') {
+    
+  } else if (mode == 'L') {
+    
+  }
+}
+
+void calibrate() {
+  
+}
+
+//---------------------------------------------------------------
+//Abstracted functions for sending data
+
+void sendReady() {
+  
+}
+
+void sendTime() {
+  
+}
+
+void sendPos() {
+  
+}
+
+//---------------------------------------------------------------
 
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
