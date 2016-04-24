@@ -144,6 +144,13 @@ void loop() {
     }
   }
 
+  // check buttons for manual move
+  if (!digitalRead(BUTTON_L)) { // if button is held pressed
+    Setpoint = currPos - 1.0;
+  } else if (!digitalRead(BUTTON_R)) {
+    Setpoint = currPos + 1.0;
+  }
+  
   Input = currPos;
   myPID.Compute();
 
