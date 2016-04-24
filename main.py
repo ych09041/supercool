@@ -390,25 +390,22 @@ class ArmObj:
         returns nothing
         """
 
-        parsedString = string.split()
-        if parsedString[0] == "Arm":
-            targetArmPosition = []
-            try:
-                for val in parsedString[1:]:
-                    targetArmPosition.append(int(val))
-            except ValueError:
-                print "ERROR: Gibberish input for 1 or more desired positions"
-                return
-            self.writeArm(targetArmPosition)
-        return
-
-
     def record(self,string):
-        """Author:
+        """Author: Chris Berthelet
 
         Does the back-end execution of the `Record' console command. Called when the first
         word in string is "Record".
+        
+        Records the current status of the arm, or records waits (meaning pause in motion). Saves data
+        to the open file, throws error if file does not exist. Must follow data recording convention 
+        noted below.
 
+        Record
+        Records all the positions of the arm.
+
+        Record Wait Time
+        Records a wait in the control sequence of length Time in milliseconds.
+        
         Inputs:
             string: total user input at the console in string format
 
@@ -425,8 +422,49 @@ class ArmObj:
 
         Returns:
             Nothing"""
-
-
+        
+        ## Read in string and check if "Record" or if "Record Wait time"
+        
+        ## case insensitive
+        string = string.lower()
+        ## create array of all words in string that are separated by spaces
+        stringArray = string.split()
+        ## count how many words are in the array 
+        numberOfWords = len(stringArray)
+        
+        if numberOfWords == 1:
+            ## this means that the only word is "Record" and thus a whole line is recorded    
+            theFile = open(self.file,'a')
+            
+            addressLinks = self.positions
+            
+            absPositions = []
+            
+            for add1 in addressLinks: 
+                
+                absPositions.append(self.readOneLink(add1)) 
+            
+    
+            
+            theFile.write(b[0] + '\n')
+        
+        elif numberOfWords <= 3:
+            ## this means that the input may be "Record Wait" or some invalid input
+            if stringArray[1] == "wait":
+                
+                if stringArray[2].isnumeric() == True:
+                    ## this means the third input is a valid wait time (ms)
+                    
+                else:
+                    print "INVALID INPUT FOR WAIT TIME"
+            
+            else:
+                print "INVALID INPUT"
+            
+        else:
+            ## this means there are too many inputs
+            print "TOO MANY INPUTS"
+            
         return
 
     def openOpen(self,string):
