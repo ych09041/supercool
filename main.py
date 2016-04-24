@@ -434,19 +434,27 @@ class ArmObj:
         
         if numberOfWords == 1:
             ## this means that the only word is "Record" and thus a whole line is recorded    
-            theFile = open(self.file,'a')
+            theFile = self.file
+            ## moves to the end of the .csv file
+            theFile.seek(0,2)
             
             addressLinks = self.positions
             
-            absPositions = []
+            absPositions = ""
             
-            for add1 in addressLinks: 
+            for i in range(0,len(addressLinks)-1): 
                 
-                absPositions.append(self.readOneLink(add1)) 
-            
-    
-            
-            theFile.write(b[0] + '\n')
+                ## write to Arduino to recieve position feedback for each link
+                self.writeOneLink(add1,"r")
+                
+                if i == len(addressLinks)-1:   
+                    ## append the position to the array without comma because last value in row
+                    absPositions = absPositions + str(self.readOneLink(add1))
+                else:
+                    ## append the position to the array with comma
+                    absPositions = absPositions + str(self.readOneLink(add1)) + ","
+            ## adds the row of ABS positions
+            theFile.write(absPositions + '\n')
         
         elif numberOfWords <= 3:
             ## this means that the input may be "Record Wait" or some invalid input
@@ -454,6 +462,17 @@ class ArmObj:
                 
                 if stringArray[2].isnumeric() == True:
                     ## this means the third input is a valid wait time (ms)
+                    
+                    ## this means that the only word is "Record" and thus a whole line is recorded    
+                    theFile = self.file
+                    ## moves to the end of the .csv file
+                    theFile.seek(0,2)
+                    
+                    waitTime = stringArray[2]
+                    waitString = "WAIT," + waitTime
+                    
+                    ## adds the row with WAIT and the amount of time in (ms)
+                    theFile.write(waitString + '\n')
                     
                 else:
                     print "INVALID INPUT FOR WAIT TIME"
