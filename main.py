@@ -173,8 +173,8 @@ class ArmObj:
 
         returns nothing.
         """
-        ## bring all input to lower case
-        string = string.lower()
+        ## bring all input to lower case and strip leading/trailing whitespaces
+        string = string.lower().strip()
 
         ## help
         if string.startswith("help"):
