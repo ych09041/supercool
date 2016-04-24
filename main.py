@@ -456,7 +456,7 @@ class ArmObj:
                 
                 if stringArray[2].isnumeric() == True:
                     ## this means the third input is a valid wait time (ms)
-                    
+                    pass    
                 else:
                     print "INVALID INPUT FOR WAIT TIME"
             
@@ -522,7 +522,7 @@ class ArmObj:
 
 
     def close(self,string):
-        """Author:
+        """Author: Chenliu Stephen Lu
 
         Inputs:
             string: total user input at the console
@@ -532,6 +532,15 @@ class ArmObj:
         returns nothing
         sets self.file to None"""
 
+        if string != "Close" or string != "close":
+            self.badInput()
+            return
+        elif self.file is None:
+            print "No file is open. Operation aborted."
+            return
+        else:
+            self.file.close()
+            self.file = None
         return
 
     def run(self,string):
