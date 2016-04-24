@@ -101,12 +101,12 @@ class ArmObj:
 
         """
         if not command.isalnum():
-            ## Call error printout function
+            self.badInput()
             return
 
         cmdChar = command[0]
         if cmdChar not in "lLrdc":
-            ## Call error printout function
+            self.badInput()
             return
 
         if len(command) > 1:
