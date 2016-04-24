@@ -366,9 +366,9 @@ class ArmObj:
         """
         parsedString = string.split()
         if len(parsedString) == 3 and parsedString[0] == "link":
-            runMode = "rel"
+            linkCommand = "l"
         elif len(parsedString) == 4 and parsedString[0] == "link" and parsedString[3] == "-abs":
-            runMode = "abs"
+            linkCommand = "L"
         else:
             self.badInput()
         
@@ -379,9 +379,6 @@ class ArmObj:
             print "ERROR: Gibberish input for link number and/or desired position"
             return
         if len(self.positions) >= linkNumber and linkNumber >= 0:
-            linkCommand = "l"
-            if runMode == "abs":
-                linkCommand = "L"
             linkCommand += targetPosition
             self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
         else:
@@ -391,7 +388,6 @@ class ArmObj:
 
 
     def arm(self, string):
-        ## NEED TO BE UPDATED
         """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
@@ -402,6 +398,27 @@ class ArmObj:
 
         returns nothing
         """
+
+        parsedString = string.split()
+        if parsedString[0] == "arm":
+            commandChar = "l"
+        elif parsedString[0] == "arm" and parsedString[-1] == "-abs":
+            commandChar = "L"
+        else:
+            self.badInput()
+
+        setpointList = parsedString[1:-2]
+        if not len(setpointList) == len(self.positions):
+            print("Wrong number of position arguments")
+            return
+
+        linkIndex = 0
+        for setpoint in setpointList:
+            self.writeOneLink(self.positionsp[linkIndex], commandChar+setpoint)
+            linkIndex += 1
+
+        return
+        
 
     def record(self,string):
         """Author: Chris Berthelet
