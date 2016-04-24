@@ -7,7 +7,7 @@ int incomingByte = 0;  // for incoming serial data
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = 10, Ki = 1, Kd = 3;
+double Kp = 15, Ki = 5, Kd = 3;
 double minPoint = -20;
 double maxPoint = 20;
 double val = 0;
@@ -53,7 +53,7 @@ void setup() {
 
   Serial.begin (9600);
   currPos, lastPos, velocity  = 0;
-  ticktodeg = 1.0 /2.0;
+  ticktodeg = 1.0 /2.2;
 
   // Initialize Motor pwm
   pinMode(INPUT1, OUTPUT);
@@ -78,11 +78,13 @@ void loop() {
     incomingByte = Serial.read();
 
     if (incomingByte == 97) {
-      Setpoint = currPos + 2.0;
+      Setpoint = Setpoint +2.0;
+//      Setpoint = 30.0;
       incomingByte = 0;
     }
     if (incomingByte == 100) {
-      Setpoint = currPos - 2.0;
+      Setpoint = Setpoint-2.0;
+//      Setpoint = -30.0;
       incomingByte = 0;
     }
   }
@@ -102,13 +104,13 @@ void loop() {
   }
   int timeChange = (currTime-lastTime);
 
-  if(timeChange >=  SampleTime)
-  {
-    Serial.println((int)val, DEC);
-    Serial.println(Output,DEC);
-    Serial.println(currPos);
-    lastTime = currTime;
-  }
+//  if(timeChange >=  SampleTime)
+//  {
+//    Serial.println((int)val, DEC);
+//    Serial.println(Output,DEC);
+//    Serial.println(currPos);
+//    lastTime = currTime;
+//  }
 }
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
@@ -140,7 +142,7 @@ void motor_brake_raw() {
 
 int pwm_float2int(float in) {
   int out = (int)(in * 255.0);
-  Serial.println(out);
+//  Serial.println(out);
   return out;
 }
 
