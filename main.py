@@ -80,7 +80,6 @@ class ArmObj:
 
 
     def writeOneLink(self,address,command):
-        ##NEEDS TO BE UPDATED
         """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
@@ -367,20 +366,32 @@ class ArmObj:
         """
         parsedString = string.split()
         if len(parsedString) == 3 and parsedString[0] == "link":
-            try:
-                linkNumber = int(parsedString[1])
-                targetPosition = int(parsedString[2])
-            except ValueError:
-                print "ERROR: Gibberish input for link number and/or desired position"
-                return
-            if len(self.positions) >= linkNumber and linkNumber >= 0:
-                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
-            else:
-                print "ERROR: Target link is out of range"
+            runMode = "rel"
+        elif len(parsedString) == 4 and parsedString[0] == "link" and parsedString[3] == "-abs":
+            runMode = "abs"
+        else:
+            self.badInput()
+        
+        try:
+            linkNumber = int(parsedString[1])
+            targetPosition = int(parsedString[2])
+        except ValueError:
+            print "ERROR: Gibberish input for link number and/or desired position"
+            return
+        if len(self.positions) >= linkNumber and linkNumber >= 0:
+            linkCommand = "l"
+            if runMode == "abs":
+                linkCommand = "L"
+            linkCommand += targetPosition
+            self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
+        else:
+            print "ERROR: Target link is out of range"
+
         return
 
 
     def arm(self, string):
+        ## NEED TO BE UPDATED
         """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
