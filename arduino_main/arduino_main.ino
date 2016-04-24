@@ -131,15 +131,20 @@ void loop() {
   Input = currPos;
   myPID.Compute();
 
-  if (Output > 0) {
-    val = myMap(Output, 0, maxPoint, 0, 1.0);
-    motor_forward_raw(val);
-    heading = 'a';
+  if isAtPosition(){
+    if (Output > 0) {
+      val = myMap(Output, 0, maxPoint, 0, 1.0);
+      motor_forward_raw(val);
+      heading = 'a';
+    }
+    else {
+      val = myMap(-Output, 0, maxPoint, 0, 1.0);
+      motor_reverse_raw(val);
+      heading = 'd';
+    }
   }
-  else {
-    val = myMap(-Output, 0, maxPoint, 0, 1.0);
-    motor_reverse_raw(val);
-    heading = 'd';
+  else{
+    motor_brake_raw()
   }
 
   
@@ -153,6 +158,15 @@ void loop() {
 //  digitalWrite(LED_B,HIGH);
 //  motor_reverse_raw(0.2);
 //  delay(2000);
+  
+}
+
+
+/*
+ * If within 0.5 degrees to final destination we are at final position
+ */
+void isAtPosition(){
+  return abs(currPos - Setpoint) <0.5
   
 }
 
@@ -189,7 +203,6 @@ void sendData() {
   }
 }
 
-//---------------------------------------------------------------
 
 
 
