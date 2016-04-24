@@ -1,4 +1,9 @@
 #include <Wire.h>
+#include <PID_v1.h>
+
+// encoder pins
+#define encoder0PinA 2
+#define encoder0PinB 3
 
 // motor drive pins
 // 2 and 4 should be HIGH at the same time, 1 and 3 same time. NEVER OTHERWISE.
@@ -22,6 +27,8 @@
 int SLAVE_ADDRESS = 0x04; // some initial value, changed later
 int number = 0;
 int state = 0;
+
+int incomingByte = 0;  // for incoming serial data
 
 void setup() {
   
