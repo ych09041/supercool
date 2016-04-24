@@ -60,7 +60,7 @@ class ArmObj:
 
     def ping(self,address):
         ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Cheng Hao Yuan, Stephen Lu
 
         Input:
             address: the i2c address to ping
@@ -70,8 +70,11 @@ class ArmObj:
 
 
         try:
-            bus.write_byte(address,-1)
-            number = bus.read_byte(address)
+            self.bus.write_byte(address,"d")
+            lmb = self.readMultipleByte(address, 4)
+            number = 0
+            for i in range(0, 4):
+                number = (lmb[i]<<8) | number
             return number
         except IOError:
             return -1
