@@ -209,7 +209,13 @@ void sendData() {
 
 
 void interp() {
-  if   
+  if (mode == 'c') {
+    calibrate();
+  } else if (mode == 'l') {
+    
+  } else if (mode == 'L') {
+    
+  }
 }
 
 void calibrate() {
