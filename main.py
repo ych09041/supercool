@@ -120,7 +120,7 @@ class ArmObj:
         else:
             newCommand = cmdChar
             
-        self.bus.write_byte(address, newCommand)
+        self.bus.write_i2c_block_data(address, 0, newCommand)
 
         return
 
