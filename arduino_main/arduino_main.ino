@@ -5,6 +5,9 @@
 #define encoder0PinA 2
 #define encoder0PinB 3
 
+#define maxSetpoint 40
+#define minSetpoint -40
+
 // motor drive pins
 // 2 and 4 should be HIGH at the same time, 1 and 3 same time. NEVER OTHERWISE.
 // 3 and 4 HIGH together for braking. 1 and 2 LOW at this time.
@@ -220,16 +223,28 @@ void interp() {
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
-    Setpoint = atof(i2cVal);
-    
+    Setpoint = Setpoint + atof(i2cVal);
+    clamp(&Setpoint);
   } else if (mode == 'L') {
-    
+    Setpoint = atof(i2cVal);
+    clamp(&Setpoint);
   }
 }
 
 void calibrate() {
   Serial.println("calibrate:PLACEHOLDER");
 }
+
+
+void clamp(double *setpoint) {
+  if (*setpoint > maxSetpoint) {
+    *setpoint = maxSetpoint;
+  } else if (*setpoint < minSetpoint) {
+    *setpoint = minSetpoint;
+  }
+}
+
+
 
 //---------------------------------------------------------------
 //Abstracted functions for sending data
