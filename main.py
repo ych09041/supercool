@@ -140,31 +140,9 @@ class ArmObj:
         number = self.bus.read_byte(address)
         return number
 
-    '''
-    def writeArm(self,lis):
-        ##NEEDS TO BE UPDATED
-        """Author:
 
-        Input:
-            lis: a list of integers,
-        Writes each element of lis to the corresponding linkage by position ordering.
-        Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
-
-        returns nothing
-        """
-
-        if len(lis) > len(self.positions):
-            print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
-        if len(lis) < len(self.positions):
-            print "WARNING: COMMAND IS FOR A SHORTER ARM CONFIGURATION"
-        else:
-            for i in range(0,len(lis)):
-                self.writeOneLink(self.positions[i], lis[i])
-        return
-    '''
 
     def interpretCommand(self,string):
-        ##NEEDS TO BE UPDATED
         """Author: Cheng Hao Yuan
 
         Input:
@@ -224,50 +202,7 @@ class ArmObj:
 
 
         return
-    '''
-    ## DEPRICATED
-    def DirectDrive(self,string):
-        ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
-        """Author:
 
-        Processes commands for the direct drive state.
-
-        Valid input format:
-        Link [Link#] [Position]
-        Arm [Position Link #1] [Position Link $2] ...
-        """
-
-        ##Optional: run posDetect before executing commands to automatically have the
-        ##most up-to-date arm i2c addresses. Might be good for robustness/protection
-        ##self.posDetect()
-
-        parsedString = string.split()
-        if len(parsedString) == 3 and parsedString[0] == "Link":
-            try:
-                linkNumber = int(parsedString[1])
-                targetPosition = int(parsedString[2])
-            except ValueError:
-                print "ERROR: Gibberish input for link number and/or desired position"
-                return
-            if len(self.positions) >= linkNumber and linkNumber >= 0:
-                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
-            else:
-                print "ERROR: Target link is out of range"
-
-        elif parsedString[0] == "Arm":
-            targetArmPosition = []
-            try:
-                for val in parsedString[1:]:
-                    targetArmPosition.append(int(val))
-            except ValueError:
-                print "ERROR: Gibberish input for 1 or more desired positions"
-                return
-            self.writeArm(targetArmPosition)
-
-        else:
-            print "ERROR: Gibberish input"
-            return
-    '''
 
     def helpHelp(self, string):
         """Author:Yiran 
