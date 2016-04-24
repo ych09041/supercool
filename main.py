@@ -563,7 +563,7 @@ class ArmObj:
         return
 
     def run(self,string):
-        """Author:
+        """Author: Tony
 
         Inputs:
             string: total user input at the console
@@ -572,7 +572,19 @@ class ArmObj:
 
         returns nothing"""
 
-        return
+        self.file.seek(0) # Reset pointer to head of file
+        for line in self.file:# Iterate through file
+            if '\n' in line:# intermediate lines are returned with a \n at end
+                cut = line.replace('\n', "")# get rid of that \n
+            else:
+                cut = test # stick to naming for later code
+            arr = cut.split(",")
+
+            # Should check that there is not gibberish maybe
+            if arr[0] == 'WAIT':# We are waiting for ceratin amount of time in position
+                time.sleep(int(arr[1])/1000.)
+            else:# We move the arm
+                self.writeArm(map(int,arr))
 
     def calibrate(self,string):
         """Author: Yiran
