@@ -124,9 +124,19 @@ class ArmObj:
 
         return
 
+    def readMultipleBytes(self,address,numbytes):
+        """Author: Cheng Hao Yuan
+
+        Reads numbytes number of bytes from the arduino at address. Return the multi-byte concatenated data.
+
+        """
+        data = ""
+        for i in range(0,numbytes):
+            data += self.bus.read_byte(address)
+        return data
+
     def readOneLink(self,address):
-        ##NEEDS TO BE UPDATED
-        """Author: Stephen Lu
+        """Author: Stephen Lu, Cheng Hao Yuan
 
         Input:
             address: the i2c address of the link to read from.
@@ -137,8 +147,8 @@ class ArmObj:
             the data it receives
 
         """
-        number = self.bus.read_byte(address)
-        return number
+        data = self.readMultipleBytes(address,4)
+        return data
 
 
 
