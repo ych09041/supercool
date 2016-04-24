@@ -1,6 +1,13 @@
 #include <Wire.h>
 #include <PID_v1.h>
 
+#define TICKS_PER_DEGREE 2.17
+#define DEGREES_PER_TICK 1.0/TICKS_PER_DEGREE
+
+// button switch pins
+#define BUTTON_L 0
+#define BUTTON_R 1
+
 // encoder pins
 #define encoder0PinA 2
 #define encoder0PinB 3
@@ -24,7 +31,7 @@
 #define SW3 8 // switch 3, inside
 
 // I2C address
-int SLAVE_ADDRESS = 0x04; // some initial value, changed later
+int SLAVE_ADDRESS = 0x04; // some initial motorpwmue, changed later
 int number = 0;
 int state = 0;
 char mode = 'c';
@@ -36,7 +43,7 @@ double Setpoint, Input, Output;
 double Kp = 10, Ki = 1, Kd = 3;
 double minPoint = -20;
 double maxPoint = 20;
-double val = 0;
+double motorpwm = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -44,8 +51,11 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 // Velocity Computation Variables
 volatile signed long encoder0Pos = 0;
 unsigned long lastTime, currTime;
-double currPos, lastPos, velocity, ticktodeg;
+double currPos, lastPos, velocity;
 int SampleTime = 500; //500  msec
+
+char i2cmotorpwm[4];
+int i;
 
 void setup() {
   
@@ -63,6 +73,9 @@ void setup() {
   pinMode(LED_G,OUTPUT);
   pinMode(LED_B,OUTPUT);
 
+  pinMode(BUTTON_L, INPUT_PULLUP); // the buttons read LOW when pressed
+  pinMode(BUTTON_R, INPUT_PULLUP);
+
   // determine I2C address from switches
   pinMode(13, OUTPUT);
   pinMode(SW1, INPUT_PULLUP);
@@ -79,9 +92,7 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
-  Serial.println("Calibrating...");
-  calibrate();
-  
+
   Input = 0;
   Setpoint = 0; // degrees
 
@@ -101,8 +112,10 @@ void setup() {
   attachInterrupt(0, doEncoderA, CHANGE);
 
   currPos, lastPos, velocity  = 0;
-  ticktodeg = 1.0 /2.0;
-  
+
+  Serial.println("Initial calibration...");
+  calibrate();
+    
   Serial.println("Ready!");
 
   
@@ -114,39 +127,73 @@ bool isAtPosition(){
 }
 
 
-
 void loop() {
   // put your main code here, to run repeatedly:
 
-  currPos = encoder0Pos * ticktodeg;
+  currPos = encoder0Pos * DEGREES_PER_TICK;
   currTime = millis();
 
   if (Serial.available() > 0) {
-    // read the incoming byte:
-    incomingByte = Serial.read();
+    
+//    // read the incoming byte:
+//    incomingByte = Serial.read();
+//
+//    if (incomingByte == 97) {
+//      Setpoint = currPos + 2.0;
+//      incomingByte = 0;
+//    }
+//    if (incomingByte == 100) {
+//      Setpoint = currPos - 2.0;
+//      incomingByte = 0;
+//    }
 
-    if (incomingByte == 97) {
-      Setpoint = currPos + 2.0;
-      incomingByte = 0;
+
+
+    //Serial mockup of I2C
+
+    
+    int i = 0;
+    while(Serial.available()) {
+      if (i == 0) {
+        mode = Serial.read();
+        Serial.print("Mode received: ");
+        Serial.println(mode);
+      } else {
+        i2cmotorpwm[i-1] = Serial.read();
+        Serial.print("Number received: ");
+        Serial.println(i2cmotorpwm[i-1]);
+      }
+      i++;
     }
-    if (incomingByte == 100) {
-      Setpoint = currPos - 2.0;
-      incomingByte = 0;
-    }
+    interp();
+  
+
+
+
+
+
+
   }
 
+  // check buttons for manual move
+  if (!digitalRead(BUTTON_L)) { // if button is held pressed
+    Setpoint = currPos - 1.0;
+  } else if (!digitalRead(BUTTON_R)) {
+    Setpoint = currPos + 1.0;
+  }
+  
   Input = currPos;
   myPID.Compute();
 
   if (isAtPosition()) {
     if (Output > 0) {
-      val = myMap(Output, 0, maxPoint, 0, 1.0);
-      motor_forward_raw(val);
+      motorpwm = myMap(Output, 0, maxPoint, 0, 1.0);
+      motor_forward_raw(motorpwm);
       heading = 'a';
     }
     else {
-      val = myMap(-Output, 0, maxPoint, 0, 1.0);
-      motor_reverse_raw(val);
+      motorpwm = myMap(-Output, 0, maxPoint, 0, 1.0);
+      motor_reverse_raw(motorpwm);
       heading = 'd';
     }
   }
@@ -177,8 +224,7 @@ void loop() {
 
 //------------------------------------------------------------
 
-char i2cVal[4];
-int i;
+
 // callback for received data
 void receiveData(int byteCount) {
   i = 0;
@@ -188,9 +234,9 @@ void receiveData(int byteCount) {
       Serial.print("Mode received: ");
       Serial.println(mode);
     } else {
-      i2cVal[i-1] = Wire.read();
+      i2cmotorpwm[i-1] = Wire.read();
       Serial.print("Number received: ");
-      Serial.println(i2cVal[i-1]);
+      Serial.println(i2cmotorpwm[i-1]);
     }
     i++;
   }
@@ -220,15 +266,34 @@ void interp() {
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
-    Setpoint = atof(i2cVal);
-    
+    Setpoint += atof(i2cmotorpwm);
+    Serial.print("Motor setpoint: ");
+    Serial.println(Setpoint); 
   } else if (mode == 'L') {
-    
+    Setpoint = atof(i2cmotorpwm);
+    Serial.print("Motor setpoint: ");
+    Serial.println(Setpoint);  
   }
 }
 
 void calibrate() {
-  Serial.println("calibrate:PLACEHOLDER");
+  Serial.println("Start calibration...");
+  myPID.SetMode(MANUAL);
+  int count_loop = 0;
+  while((!digitalRead(BUTTON_L)) && (!digitalRead(BUTTON_R))) {
+    motor_forward_raw(0.2);
+    delay(100);
+    motor_brake_raw();
+    delay(100);
+    if (count_loop % 10 == 0) Serial.println("Moving...");
+  }
+  encoder0Pos = 45.0 * TICKS_PER_DEGREE;
+  currPos = 45.0;
+  Input = currPos;
+  myPID.SetMode(AUTOMATIC);
+  Setpoint = 0.0;
+  delay(1000);
+  Serial.println("Calibrated.");  
 }
 
 //---------------------------------------------------------------
@@ -252,7 +317,6 @@ void sendTime() {
   if (sendIndex > 3) {
     sendIndex = 0;
   }
-  
 }
 
 int sendPosTemp;
@@ -263,8 +327,7 @@ void sendPos() {
   sendIndex++;
   if (sendIndex > 1) {
     sendIndex = 0;
-  }
-    
+  } 
 }
 
 //---------------------------------------------------------------
