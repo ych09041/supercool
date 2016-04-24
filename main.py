@@ -475,6 +475,7 @@ class ArmObj:
                 
                 if stringArray[2].isnumeric() == True:
                     ## this means the third input is a valid wait time (ms)
+
                     
                     ## this means that the only word is "Record" and thus a whole line is recorded    
                     theFile = self.file
@@ -486,7 +487,6 @@ class ArmObj:
                     
                     ## adds the row with WAIT and the amount of time in (ms)
                     theFile.write(waitString + '\n')
-                    
                 else:
                     print "INVALID INPUT FOR WAIT TIME"
             
@@ -500,7 +500,7 @@ class ArmObj:
         return
 
     def openOpen(self,string):
-        """Author:
+        """Author: Chenliu Stephen Lu
 
         Inputs:
             string: total user input at the console
@@ -516,7 +516,11 @@ class ArmObj:
 
         if len(parsedString) > 2:
             self.badInput()
-            return  
+            return
+        if parsedString[0] != "Open" or parsedString[0] != "open":
+            self.badInput()
+            return
+        
         if self.file is not None:
             print "There's already a file open; please close it before opening another"
             return
@@ -548,7 +552,7 @@ class ArmObj:
 
 
     def close(self,string):
-        """Author:
+        """Author: Chenliu Stephen Lu
 
         Inputs:
             string: total user input at the console
@@ -558,6 +562,15 @@ class ArmObj:
         returns nothing
         sets self.file to None"""
 
+        if string != "Close" or string != "close":
+            self.badInput()
+            return
+        elif self.file is None:
+            print "No file is open. Operation aborted."
+            return
+        else:
+            self.file.close()
+            self.file = None
         return
 
     def run(self,string):
@@ -631,6 +644,8 @@ class ArmObj:
         returns nothing"""
 
         print "Bad input detected. Run 'help' for a list of commands."
+
+        return
         
 
 
