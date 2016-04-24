@@ -37,8 +37,7 @@ class ArmObj:
         self.file = None
 
     def posDetect(self):
-        ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Stephen Lu
 
         Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
         Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
@@ -59,8 +58,7 @@ class ArmObj:
         return
 
     def ping(self,address):
-        ##NEEDS TO BE UPDATED
-        """Author:
+        """Author: Cheng Hao Yuan, Stephen Lu
 
         Input:
             address: the i2c address to ping
@@ -70,8 +68,11 @@ class ArmObj:
 
 
         try:
-            bus.write_byte(address,-1)
-            number = bus.read_byte(address)
+            self.bus.write_byte(address,"d")
+            lmb = self.readMultipleByte(address, 4)
+            number = 0
+            for i in range(0, 4):
+                number = (lmb[i]<<8) | number
             return number
         except IOError:
             return -1
@@ -120,7 +121,7 @@ class ArmObj:
         else:
             newCommand = cmdChar
             
-        self.bus.write_byte(address, newCommand)
+        self.bus.write_i2c_block_data(address, 0, newCommand)
 
         return
 
