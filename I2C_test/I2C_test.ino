@@ -75,7 +75,7 @@ void receiveData(int byteCount) {
 int index = 0;
 void sendData() {
   char buf[8];
-  char n = 1234567;
+  n = 1234567;
             
   buf[0] = (char) n;
   buf[1] = (char) n >> 8;
