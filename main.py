@@ -80,7 +80,6 @@ class ArmObj:
 
 
     def writeOneLink(self,address,command):
-        ##NEEDS TO BE UPDATED
         """Author: Cheng Hao Yuan, Stephen Lu
 
         Inputs:
@@ -125,9 +124,19 @@ class ArmObj:
 
         return
 
+    def readMultipleBytes(self,address,numbytes):
+        """Author: Cheng Hao Yuan
+
+        Reads numbytes number of bytes from the arduino at address. Return the multi-byte concatenated data.
+
+        """
+        data = ""
+        for i in range(0,numbytes):
+            data += self.bus.read_byte(address)
+        return data
+
     def readOneLink(self,address):
-        ##NEEDS TO BE UPDATED
-        """Author: Stephen Lu
+        """Author: Stephen Lu, Cheng Hao Yuan
 
         Input:
             address: the i2c address of the link to read from.
@@ -138,32 +147,12 @@ class ArmObj:
             the data it receives
 
         """
-        number = self.bus.read_byte(address)
-        return number
+        data = self.readMultipleBytes(address,4)
+        return data
 
-    def writeArm(self,lis):
-        ##NEEDS TO BE UPDATED
-        """Author:
 
-        Input:
-            lis: a list of integers,
-        Writes each element of lis to the corresponding linkage by position ordering.
-        Failsafe checks to see if lis is the same length as the number of linkages on the arm. If there is a mismatch, nothing is done.
-
-        returns nothing
-        """
-
-        if len(lis) > len(self.positions):
-            print "WARNING: COMMAND IS FOR A LONGER ARM CONFIGURATION"
-        if len(lis) < len(self.positions):
-            print "WARNING: COMMAND IS FOR A SHORTER ARM CONFIGURATION"
-        else:
-            for i in range(0,len(lis)):
-                self.writeOneLink(self.positions[i], lis[i])
-        return
 
     def interpretCommand(self,string):
-        ##NEEDS TO BE UPDATED
         """Author: Cheng Hao Yuan
 
         Input:
@@ -223,50 +212,7 @@ class ArmObj:
 
 
         return
-    '''
-    ## DEPRICATED
-    def DirectDrive(self,string):
-        ##NEEDS TO BE UPDATED. SHOULD BE MERGED INTO interpretCommand
-        """Author:
 
-        Processes commands for the direct drive state.
-
-        Valid input format:
-        Link [Link#] [Position]
-        Arm [Position Link #1] [Position Link $2] ...
-        """
-
-        ##Optional: run posDetect before executing commands to automatically have the
-        ##most up-to-date arm i2c addresses. Might be good for robustness/protection
-        ##self.posDetect()
-
-        parsedString = string.split()
-        if len(parsedString) == 3 and parsedString[0] == "Link":
-            try:
-                linkNumber = int(parsedString[1])
-                targetPosition = int(parsedString[2])
-            except ValueError:
-                print "ERROR: Gibberish input for link number and/or desired position"
-                return
-            if len(self.positions) >= linkNumber and linkNumber >= 0:
-                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
-            else:
-                print "ERROR: Target link is out of range"
-
-        elif parsedString[0] == "Arm":
-            targetArmPosition = []
-            try:
-                for val in parsedString[1:]:
-                    targetArmPosition.append(int(val))
-            except ValueError:
-                print "ERROR: Gibberish input for 1 or more desired positions"
-                return
-            self.writeArm(targetArmPosition)
-
-        else:
-            print "ERROR: Gibberish input"
-            return
-    '''
 
     def helpHelp(self, string):
         """Author:Yiran 
@@ -367,16 +313,24 @@ class ArmObj:
         """
         parsedString = string.split()
         if len(parsedString) == 3 and parsedString[0] == "link":
-            try:
-                linkNumber = int(parsedString[1])
-                targetPosition = int(parsedString[2])
-            except ValueError:
-                print "ERROR: Gibberish input for link number and/or desired position"
-                return
-            if len(self.positions) >= linkNumber and linkNumber >= 0:
-                self.writeOneLink(self.positions[linkNumber - 1], targetPosition)
-            else:
-                print "ERROR: Target link is out of range"
+            linkCommand = "l"
+        elif len(parsedString) == 4 and parsedString[0] == "link" and parsedString[3] == "-abs":
+            linkCommand = "L"
+        else:
+            self.badInput()
+        
+        try:
+            linkNumber = int(parsedString[1])
+            targetPosition = int(parsedString[2])
+        except ValueError:
+            print "ERROR: Gibberish input for link number and/or desired position"
+            return
+        if len(self.positions) >= linkNumber and linkNumber >= 0:
+            linkCommand += targetPosition
+            self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
+        else:
+            print "ERROR: Target link is out of range"
+
         return
 
 
@@ -391,6 +345,30 @@ class ArmObj:
 
         returns nothing
         """
+
+        parsedString = string.split()
+        if parsedString[0] == "arm":
+            commandChar = "l"
+        elif parsedString[0] == "arm" and parsedString[-1] == "-abs":
+            commandChar = "L"
+        else:
+            self.badInput()
+    
+        setpointList = parsedString[1:-2]
+        if not len(setpointList) == len(self.positions):
+            print("Wrong number of position arguments")
+            return
+
+        linkIndex = 0
+        for setpoint in setpointList:
+            if not setpoint.isnumeric():
+                print("invalid position setpoint input")
+                return
+            self.writeOneLink(self.positionsp[linkIndex], commandChar+setpoint)
+            linkIndex += 1
+
+        return
+        
 
     def record(self,string):
         """Author: Chris Berthelet
@@ -563,7 +541,7 @@ class ArmObj:
         return
 
     def run(self,string):
-        """Author:
+        """Author: Tony
 
         Inputs:
             string: total user input at the console
@@ -572,7 +550,19 @@ class ArmObj:
 
         returns nothing"""
 
-        return
+        self.file.seek(0) # Reset pointer to head of file
+        for line in self.file:# Iterate through file
+            if '\n' in line:# intermediate lines are returned with a \n at end
+                cut = line.replace('\n', "")# get rid of that \n
+            else:
+                cut = test # stick to naming for later code
+            arr = cut.split(",")
+
+            # Should check that there is not gibberish maybe
+            if arr[0] == 'WAIT':# We are waiting for ceratin amount of time in position
+                time.sleep(int(arr[1])/1000.)
+            else:# We move the arm
+                self.writeArm(map(int,arr))
 
     def calibrate(self,string):
         """Author: Yiran
