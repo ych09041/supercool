@@ -27,6 +27,7 @@
 int SLAVE_ADDRESS = 0x04; // some initial value, changed later
 int number = 0;
 int state = 0;
+char mode = 'c';
 
 int incomingByte = 0;  // for incoming serial data
 
@@ -78,6 +79,9 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
 
+  Serial.println("Calibrating...");
+  calibrate();
+  
   Input = 0;
   Setpoint = 0; // degrees
 
@@ -152,35 +156,41 @@ void loop() {
   
 }
 
+
+//------------------------------------------------------------
+
+char i2cRead[4];
+int i;
 // callback for received data
 void receiveData(int byteCount) {
-
+  i = 0;
   while(Wire.available()) {
-    number = Wire.read();
+    i2cRead[i] = Wire.read();
     Serial.print("data received: ");
-    Serial.println(number);
-
-    if (number == 1) {
-      if (state == 0) {
-        digitalWrite(13, HIGH); // set the LED on
-        state = 1;
-      } else{
-        digitalWrite(13, LOW); // set the LED off
-        state = 0;
-      }
-    }
+    Serial.println(i2cRead[i]);
+    i++;
   }
+
+  mode = i2cRead[0]
 }
 
 
 // callback for sending data
+int writeIndex = 0;
 void sendData() {
-  if (number == -1) {
-    Wire.write(millis());
+  if (mode == 'c' || mode == 'l' || mode == 'L') {
+    sendReady();
+  } else if (mode == 'd') {
+    sendTime();
+  } else if (mode == 'r') {
+    sendPos();
   } else {
-    Wire.write(number);
+    Serial.println("Something has gone horribly wrong"); 
   }
 }
+
+//---------------------------------------------------------------
+
 
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
