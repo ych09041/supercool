@@ -470,7 +470,7 @@ class ArmObj:
         return
 
     def openOpen(self,string):
-        """Author:
+        """Author: Chenliu Stephen Lu
 
         Inputs:
             string: total user input at the console
@@ -486,7 +486,11 @@ class ArmObj:
 
         if len(parsedString) > 2:
             self.badInput()
-            return  
+            return
+        if parsedString[0] != "Open" or parsedString[0] != "open":
+            self.badInput()
+            return
+        
         if self.file is not None:
             print "There's already a file open; please close it before opening another"
             return
@@ -582,6 +586,8 @@ class ArmObj:
         returns nothing"""
 
         print "Bad input detected. Run 'help' for a list of commands."
+
+        return
         
 
 
