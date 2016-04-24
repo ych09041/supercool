@@ -30,6 +30,22 @@ int state = 0;
 
 int incomingByte = 0;  // for incoming serial data
 
+// Controller variables
+double Setpoint, Input, Output;
+double Kp = 10, Ki = 1, Kd = 3;
+double minPoint = -20;
+double maxPoint = 20;
+double val = 0;
+char heading = 'a';
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+// Velocity Computation Variables
+volatile signed long encoder0Pos = 0;
+unsigned long lastTime, currTime;
+double currPos, lastPos, velocity, ticktodeg;
+int SampleTime = 500; //500  msec
+
 void setup() {
   
   Serial.begin(115200);
@@ -61,6 +77,27 @@ void setup() {
   // define callbacks for i2c communication
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
+
+  Input = 0;
+  Setpoint = 0; // degrees
+
+  //turn the PID on
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetSampleTime(5);
+  myPID.SetControllerDirection(DIRECT);
+  myPID.SetOutputLimits((double) minPoint, (double) maxPoint);
+
+  pinMode(encoder0PinA, INPUT);
+  pinMode(encoder0PinB, INPUT);
+
+  // encoder pin on interrupt 1 (pin 3)
+  attachInterrupt(1, doEncoderB, CHANGE);
+
+  // encoder pin on interrupt 0 (pin 2)
+  attachInterrupt(0, doEncoderA, CHANGE);
+
+  currPos, lastPos, velocity  = 0;
+  ticktodeg = 1.0 /2.0;
   
   Serial.println("Ready!");
 
@@ -69,16 +106,49 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(LED_G,HIGH);
-  digitalWrite(LED_R,LOW);
-  digitalWrite(LED_B,LOW);
-  motor_forward_raw(0.2);
-  delay(2000);
-  digitalWrite(LED_G,LOW);
-  digitalWrite(LED_R,HIGH);
-  digitalWrite(LED_B,HIGH);
-  motor_reverse_raw(0.2);
-  delay(2000);
+
+  currPos = encoder0Pos * ticktodeg;
+  currTime = millis();
+
+  if (Serial.available() > 0) {
+    // read the incoming byte:
+    incomingByte = Serial.read();
+
+    if (incomingByte == 97) {
+      Setpoint = currPos + 2.0;
+      incomingByte = 0;
+    }
+    if (incomingByte == 100) {
+      Setpoint = currPos - 2.0;
+      incomingByte = 0;
+    }
+  }
+
+  Input = currPos;
+  myPID.Compute();
+
+  if (Output > 0) {
+    val = myMap(Output, 0, maxPoint, 0, 1.0);
+    motor_forward_raw(val);
+    heading = 'a';
+  }
+  else {
+    val = myMap(-Output, 0, maxPoint, 0, 1.0);
+    motor_reverse_raw(val);
+    heading = 'd';
+  }
+
+  
+//  digitalWrite(LED_G,HIGH);
+//  digitalWrite(LED_R,LOW);
+//  digitalWrite(LED_B,LOW);
+//  motor_forward_raw(0.2);
+//  delay(2000);
+//  digitalWrite(LED_G,LOW);
+//  digitalWrite(LED_R,HIGH);
+//  digitalWrite(LED_B,HIGH);
+//  motor_reverse_raw(0.2);
+//  delay(2000);
   
 }
 
@@ -146,5 +216,58 @@ int pwm_float2int(float in) {
   return out;
 }
 
+double myMap(double x, double in_min, double in_max, double out_min, double out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
+
+
+void doEncoderB() {
+  // look for a low-to-high on channel B
+  if (digitalRead(encoder0PinB) == HIGH) {
+    // check channel A to see which way encoder is turning
+    if (digitalRead(encoder0PinA) == HIGH) {
+      encoder0Pos = encoder0Pos + 1;         // CW
+    }
+    else {
+      encoder0Pos = encoder0Pos - 1;         // CCW
+    }
+  }
+  // Look for a high-to-low on channel B
+  else {
+    // check channel B to see which way encoder is turning
+    if (digitalRead(encoder0PinA) == LOW) {
+      encoder0Pos = encoder0Pos + 1;          // CW
+    }
+    else {
+      encoder0Pos = encoder0Pos - 1;          // CCW
+    }
+  }
+}
+
+void doEncoderA() {
+  // look for a low-to-high on channel A
+  if (digitalRead(encoder0PinA) == HIGH) {
+    // check channel B to see which way encoder is turning
+    if (digitalRead(encoder0PinB) == LOW) {
+      encoder0Pos = encoder0Pos + 1;         // CW
+    }
+    else {
+      encoder0Pos = encoder0Pos - 1;         // CCW
+    }
+  }
+  else   // must be a high-to-low edge on channel A
+  {
+    // check channel B to see which way encoder is turning
+    if (digitalRead(encoder0PinB) == HIGH) {
+      encoder0Pos = encoder0Pos + 1;          // CW
+    }
+    else {
+      encoder0Pos = encoder0Pos - 1;          // CCW
+    }
+  }
+  //  Serial.println (encoder0Pos, DEC);
+  // use for debugging - remember to comment out
+}
 
