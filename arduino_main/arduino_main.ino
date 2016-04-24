@@ -1,6 +1,10 @@
 #include <Wire.h>
 #include <PID_v1.h>
 
+// button switch pins
+#define BUTTON_L 0
+#define BUTTON_R 1
+
 // encoder pins
 #define encoder0PinA 2
 #define encoder0PinB 3
@@ -24,7 +28,7 @@
 #define SW3 8 // switch 3, inside
 
 // I2C address
-int SLAVE_ADDRESS = 0x04; // some initial value, changed later
+int SLAVE_ADDRESS = 0x04; // some initial motorpwmue, changed later
 int number = 0;
 int state = 0;
 char mode = 'c';
@@ -36,7 +40,7 @@ double Setpoint, Input, Output;
 double Kp = 10, Ki = 1, Kd = 3;
 double minPoint = -20;
 double maxPoint = 20;
-double val = 0;
+double motorpwm = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -62,6 +66,9 @@ void setup() {
   pinMode(LED_R,OUTPUT);
   pinMode(LED_G,OUTPUT);
   pinMode(LED_B,OUTPUT);
+
+  pinMode(BUTTON_L, INPUT_PULLUP); // the buttons read LOW when pressed
+  pinMode(BUTTON_R, INPUT_PULLUP);
 
   // determine I2C address from switches
   pinMode(13, OUTPUT);
@@ -140,13 +147,13 @@ void loop() {
 
   if (isAtPosition()) {
     if (Output > 0) {
-      val = myMap(Output, 0, maxPoint, 0, 1.0);
-      motor_forward_raw(val);
+      motorpwm = myMap(Output, 0, maxPoint, 0, 1.0);
+      motor_forward_raw(motorpwm);
       heading = 'a';
     }
     else {
-      val = myMap(-Output, 0, maxPoint, 0, 1.0);
-      motor_reverse_raw(val);
+      motorpwm = myMap(-Output, 0, maxPoint, 0, 1.0);
+      motor_reverse_raw(motorpwm);
       heading = 'd';
     }
   }
@@ -177,7 +184,7 @@ void loop() {
 
 //------------------------------------------------------------
 
-char i2cVal[4];
+char i2cmotorpwm[4];
 int i;
 // callback for received data
 void receiveData(int byteCount) {
@@ -188,9 +195,9 @@ void receiveData(int byteCount) {
       Serial.print("Mode received: ");
       Serial.println(mode);
     } else {
-      i2cVal[i-1] = Wire.read();
+      i2cmotorpwm[i-1] = Wire.read();
       Serial.print("Number received: ");
-      Serial.println(i2cVal[i-1]);
+      Serial.println(i2cmotorpwm[i-1]);
     }
     i++;
   }
@@ -220,15 +227,22 @@ void interp() {
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
-    Setpoint = atof(i2cVal);
-    
+    Setpoint += atof(i2cmotorpwm);
+    Serial.print("Motor setpoint: ");
+    Serial.println(Setpoint); 
   } else if (mode == 'L') {
-    
+    Setpoint = atof(i2cmotorpwm);
+    Serial.print("Motor setpoint: ");
+    Serial.println(Setpoint);  
   }
 }
 
 void calibrate() {
-  Serial.println("calibrate:PLACEHOLDER");
+  Serial.println("Start calibration...");
+  while((!digitalRead(BUTTON_L)) && (!digitalRead(BUTTON_R))) {
+    
+  }
+  
 }
 
 //---------------------------------------------------------------
