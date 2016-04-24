@@ -12,8 +12,8 @@ int LED_B = 13;
 
 // I2C address and var
 int SLAVE_ADDRESS = 0x04; // some initial value, changed later
-int number = 0;
 int state = 0;
+char number[10] = {};
 
 void setup() {
   Serial.begin(9600);
@@ -49,13 +49,17 @@ void loop() {
 
 // callback for received data
 void receiveData(int byteCount) {
-
+  
+  int i = 0;
   while(Wire.available()) {
-    number = Wire.read();
+    number[i] = Wire.read();
+    
     Serial.print("data received: ");
-    Serial.println(number);
+    long test = number[i];
+    Serial.println(test);
+    i = i+1;
 
-    if (number == 1) {
+    if (test == 1) {
       if (state == 0) {
         digitalWrite(13, HIGH); // set the LED on
         state = 1;
@@ -68,9 +72,22 @@ void receiveData(int byteCount) {
 }
 
 // callback for sending data
+int index = 0;
 void sendData() {
-  Wire.write(number);
+  char buf[8];
+  char n = 1234567;
+            
+  buf[0] = (char) n;
+  buf[1] = (char) n >> 8;
+  buf[2] = (char) n >> 16;
+  buf[3] = (char) n >> 24;
+//  int part1 = (thisIsALong >> (8*0)) & 0xff;
+//  int part2 = (thisIsALong >> (8*1)) & 0xff;
+//  int part3 = (thisIsALong >> (8*2)) & 0xff;
+//  int part4 = (thisIsALong >> (8*3)) & 0xff;
+  Wire.write(buf[index]);
+  ++index;
+  if(index >=4) {
+    index = 0;
+  } 
 }
-
-
-
