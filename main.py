@@ -110,6 +110,11 @@ class ArmObj:
             return
 
         if len(command) > 1:
+            if "-" in command[1:]:
+                signChar = ""
+            else:
+                signChar = "0"
+
             value = int(command[1:])
             if value > self.linkMax:
                 print "Trying to move too far!"
@@ -117,7 +122,13 @@ class ArmObj:
             elif value < self.linkMin:
                 print "Trying to move too far!"
                 value = self.linkMin
-            newCommand = cmdChar + str(value)
+
+            if value < 10 and value > 0:
+                padChar = "0"
+            else:
+                padChar = ""
+
+            newCommand = cmdChar + signChar + padChar + str(value)
         else:
             newCommand = cmdChar
         newCmdList = []
@@ -125,7 +136,7 @@ class ArmObj:
         for i in newCommand:
             newCmdList.append(ord(i))
             
-        self.bus.write_i2c_block_data(address, 0, newCmdList)
+        self.bus.write_i2c_block_data(address, ord(cmdChar), newCmdList[1:])
 
         return
 
@@ -242,7 +253,7 @@ class ArmObj:
         else:
             print "Help Manual"
             print "Console Commands: \n 1.Link \n 2. Arm \n 3. Record \n 4. Open \n 5. Close \n 6. Run \n 7. Calibrate \n 8. Detect \n 0. Return to command"
-        Num=input("Enter a number for comand help: ")
+        Num=input("Enter a number for command help: ")
 
         if Num == 1:
             print "\n Link \n\n Executes a movement for 1 link specified by the input. Input formats detailed below. Inputs " \
@@ -330,6 +341,7 @@ class ArmObj:
             rel_or_abs = "L"
         else:
             self.badInput()
+            return
         
         try:
             linkNumber = int(parsedString[1])
