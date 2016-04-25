@@ -1,25 +1,29 @@
 #include <PID_v1.h>
-#define encoder0PinA 2
-#define encoder0PinB 3
+#define encoder0PinA 3
+#define encoder0PinB 2
 
 int incomingByte = 0;  // for incoming serial data
 
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = 15, Ki = 5, Kd = 3;
-double minPoint = -20;
-double maxPoint = 20;
-double val = 0;
+double Kp = .9, Ki = 0.006, Kd = 0.0;
+double minPoint = -24.0;
+double maxPoint = 24.0;
+double motorpwm = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // Velocity Computation Variables
-volatile signed long encoder0Pos = 0;
-unsigned long lastTime, currTime;
+long minEncoderPos = 0;
+long maxEncoderPos = 916;
+long midEncoderPos = (maxEncoderPos - minEncoderPos)/2.0;
+volatile signed long encoder0Pos = midEncoderPos;
+unsigned long velocityLastTime, lastTime, currTime;
 double currPos, lastPos, velocity, ticktodeg;
-int SampleTime = 500; //500  msec
+int SampleTime = 700; //500  msec
+int velocitySampleTime = 5;
 
 // Motor PWM
 int INPUT1 = 5; //motor High-side Right-side
@@ -46,14 +50,14 @@ void setup() {
   pinMode(encoder0PinB, INPUT);
 
   // encoder pin on interrupt 1 (pin 3)
-  attachInterrupt(1, doEncoderB, CHANGE);
+  attachInterrupt(0, doEncoderB, CHANGE);
 
   // encoder pin on interrupt 0 (pin 2)
-  attachInterrupt(0, doEncoderA, CHANGE);
+  attachInterrupt(1, doEncoderA, CHANGE);
 
   Serial.begin (9600);
   currPos, lastPos, velocity  = 0;
-  ticktodeg = 1.0 /2.2;
+  ticktodeg = 1.0 /4.789233;
 
   // Initialize Motor pwm
   pinMode(INPUT1, OUTPUT);
@@ -66,25 +70,33 @@ void setup() {
   digitalWrite(INPUT4, LOW);
 }
 
-
+bool isAtPosition(){
+  return abs(currPos - Setpoint) <0.5 && abs(velocity) < 0.02;
+}
 
 void loop() {
 
-  currPos = encoder0Pos * ticktodeg;
+  currPos = (encoder0Pos - midEncoderPos) * ticktodeg;
   currTime = millis();
 
-  if (Serial.available() > 0) {
+  if (Serial.available() > 0 && abs(Setpoint - currPos) < 1.0 && abs(velocity) < 0.02) {
     // read the incoming byte:
     incomingByte = Serial.read();
-
+    // a
     if (incomingByte == 97) {
-      Setpoint = Setpoint +2.0;
-//      Setpoint = 30.0;
+      Setpoint = currPos +1.0;
+//      Setpoint = 10.0;
       incomingByte = 0;
+      resetLimits();
     }
     if (incomingByte == 100) {
-      Setpoint = Setpoint-2.0;
-//      Setpoint = -30.0;
+      Setpoint = currPos-1.0;
+//      Setpoint = -10.0;
+      incomingByte = 0;
+      resetLimits();
+    }
+    if (incomingByte == 115) {
+      Setpoint = 0.0;
       incomingByte = 0;
     }
   }
@@ -92,26 +104,59 @@ void loop() {
   Input = currPos;
   myPID.Compute();
 
-  if (Output > 0) {
-    val = myMap(Output, 0, maxPoint, 0, 1.0);
-    motor_forward_raw(val);
-    heading = 'a';
+  if (!isAtPosition()) {
+    if (Output > 0) {
+      motorpwm = myMap(Output, 0, maxPoint, 0, 1.0);
+      motor_forward_raw(motorpwm);
+      heading = 'a';
+    }
+    else {
+      motorpwm = myMap(-Output, 0, maxPoint, 0, 1.0);
+      motor_reverse_raw(motorpwm);
+      heading = 'd';
+    }
   }
-  else {
-    val = myMap(-Output, 0, maxPoint, 0, 1.0);
-    motor_reverse_raw(val);
-    heading = 'd';
+  else{
+    motor_brake_raw();
+  }
+
+  long velocityTimeChange = (currTime-velocityLastTime);
+
+  if(velocityTimeChange >= velocitySampleTime)
+  {
+    velocity = (currPos - lastPos)/velocityTimeChange;
+//    Serial.println(velocity);
+    velocityLastTime = currTime;
+    lastPos = currPos;
   }
   int timeChange = (currTime-lastTime);
 
-//  if(timeChange >=  SampleTime)
-//  {
-//    Serial.println((int)val, DEC);
-//    Serial.println(Output,DEC);
-//    Serial.println(currPos);
-//    lastTime = currTime;
-//  }
+  if(timeChange >=  SampleTime)
+  {
+    Serial.println("New");
+    Serial.println((int)motorpwm, DEC);
+    Serial.println(Output,DEC);
+    Serial.println(currPos);
+    Serial.println(encoder0Pos);
+    Serial.println(abs(velocity),DEC);
+    lastTime = currTime;
+  }
 }
+
+
+void resetLimits(){
+  if (abs(Setpoint) >= 4.0 ){
+        minPoint = (double) -1.0*abs(Setpoint)*6.0;
+        maxPoint = (double) abs(Setpoint)*6.0;
+        myPID.SetOutputLimits(minPoint, maxPoint);
+      }
+      else{
+        minPoint = (double) -1.0*abs(4.0)*6.0;
+        maxPoint = (double) abs(4.0)*6.0;
+        myPID.SetOutputLimits(minPoint, maxPoint);
+      }
+}
+
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT1, 0);
@@ -119,7 +164,8 @@ void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT4, 255);
-  analogWrite(INPUT2, pwm_float2int(pwm));
+  analogWrite(INPUT2, constrain(pwm_float2int(pwm),0,5));
+
 }
 
 void motor_reverse_raw(float pwm) {
@@ -128,7 +174,7 @@ void motor_reverse_raw(float pwm) {
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT3, 255);
-  analogWrite(INPUT1, pwm_float2int(pwm));
+  analogWrite(INPUT1, constrain(pwm_float2int(pwm),0,5));
 }
 
 void motor_brake_raw() {
