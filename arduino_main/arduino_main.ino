@@ -126,10 +126,6 @@ void setup() {
   
 }
 
-bool isAtPosition(){
-  return abs(currPos - Setpoint) <0.5;
-  
-}
 
 
 void loop() {
@@ -226,8 +222,8 @@ void loop() {
 /*
  * If within 0.5 degrees to final destination we are at final position
  */
-void isAtPosition(){
-  return abs(currPos - Setpoint) <0.5
+bool isAtPosition(){
+  return abs(currPos - Setpoint) <0.5;
   
 }
 
@@ -276,7 +272,6 @@ void interp() {
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
-
     Setpoint += atof(i2cmotorpwm);
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint); 

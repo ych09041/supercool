@@ -215,8 +215,15 @@ class ArmObj:
             print "Invalid command.", \
             "Please type \"help\" to see the operation manual."
 
+<<<<<<< HEAD
         return
 
+=======
+
+        return
+
+
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
     def helpHelp(self, string):
         """Author:Yiran 
 
@@ -414,7 +421,10 @@ class ArmObj:
 
         Returns:
             Nothing"""
+<<<<<<< HEAD
 
+=======
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
         
         ## Read in string and check if "Record" or if "Record Wait time"
         
@@ -456,6 +466,10 @@ class ArmObj:
                 if stringArray[2].isdigit() == True:
                     ## this means the third input is a valid wait time (ms)
 
+<<<<<<< HEAD
+=======
+                    
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
                     ## this means that the only word is "Record" and thus a whole line is recorded    
                     theFile = self.file
                     ## moves to the end of the .csv file
@@ -466,7 +480,10 @@ class ArmObj:
                     
                     ## adds the row with WAIT and the amount of time in (ms)
                     theFile.write(waitString + '\n')
+<<<<<<< HEAD
                     
+=======
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
                 else:
                     print "INVALID INPUT FOR WAIT TIME"
             
@@ -476,8 +493,12 @@ class ArmObj:
         else:
             ## this means there are too many inputs
             print "TOO MANY INPUTS"
+<<<<<<< HEAD
         
 
+=======
+            
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
         return
 
     def openOpen(self,string):
@@ -630,6 +651,10 @@ class ArmObj:
             print "Invalid command for detect."
         return
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
     def badInput(self):
         """Author: Chenliu Stephen Lu
 
