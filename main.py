@@ -37,7 +37,7 @@ class ArmObj:
         self.file = None
 
     def posDetect(self):
-        """Author: Stephen Lu
+        """Author:Chenliu Stephen Lu
 
         Pings all potential i2c addresses of linkages, and stores the addresses of those that respond back.
         Orders the addresses in order of the Arduino's on-time and sets self.position addresses of the linkages in decreasing on-times.
@@ -58,7 +58,7 @@ class ArmObj:
         return
 
     def ping(self,address):
-        """Author: Cheng Hao Yuan, Stephen Lu
+        """Author: Cheng Hao Yuan, Chenliu Stephen Lu
 
         Input:
             address: the i2c address to ping
@@ -97,7 +97,7 @@ class ArmObj:
 
         Writes 'command' to the device at 'address' over i2c
 
-        returns nothing
+        returns nothing.
 
         """
         if not command.replace("-","").isalnum():
@@ -152,7 +152,7 @@ class ArmObj:
         return data
 
     def readOneLink(self,address):
-        """Author: Stephen Lu, Cheng Hao Yuan
+        """Author: Chenliu Stephen Lu, Cheng Hao Yuan
 
         Input:
             address: the i2c address of the link to read from.
@@ -226,15 +226,10 @@ class ArmObj:
             print "Invalid command.", \
             "Please type \"help\" to see the operation manual."
 
-<<<<<<< HEAD
-        return
-
-=======
 
         return
 
 
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
     def helpHelp(self, string):
         """Author:Yiran 
 
@@ -324,7 +319,7 @@ class ArmObj:
         return
 
     def link(self, string):
-        """Author: Cheng Hao Yuan, Stephen Lu
+        """Author: Cheng Hao Yuan, Chenliu Stephen Lu
 
         Inputs:
             string: the user input string
@@ -364,7 +359,7 @@ class ArmObj:
 
 
     def arm(self, string):
-        """Author: Cheng Hao Yuan, Stephen Lu
+        """Author: Cheng Hao Yuan, Chenliu Stephen Lu
 
         Inputs:
             string: the user input string
@@ -433,10 +428,7 @@ class ArmObj:
 
         Returns:
             Nothing"""
-<<<<<<< HEAD
 
-=======
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
         
         ## Read in string and check if "Record" or if "Record Wait time"
         
@@ -475,13 +467,10 @@ class ArmObj:
             ## this means that the input may be "Record Wait" or some invalid input
             if stringArray[1] == "wait":
                 
-                if stringArray[2].isdigit() == True:
+                if stringArray[2].isdigit() == True and int(stringArray[2]) >= 0:
                     ## this means the third input is a valid wait time (ms)
 
-<<<<<<< HEAD
-=======
-                    
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
+
                     ## this means that the only word is "Record" and thus a whole line is recorded    
                     theFile = self.file
                     ## moves to the end of the .csv file
@@ -492,10 +481,6 @@ class ArmObj:
                     
                     ## adds the row with WAIT and the amount of time in (ms)
                     theFile.write(waitString + '\n')
-<<<<<<< HEAD
-                    
-=======
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
                 else:
                     print "INVALID INPUT FOR WAIT TIME"
             
@@ -505,12 +490,6 @@ class ArmObj:
         else:
             ## this means there are too many inputs
             print "TOO MANY INPUTS"
-<<<<<<< HEAD
-        
-
-=======
-            
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
         return
 
     def openOpen(self,string):
@@ -609,7 +588,7 @@ class ArmObj:
             if arr[0] == 'WAIT':# We are waiting for ceratin amount of time in position
                 time.sleep(int(arr[1])/1000.)
             else:# We move the arm
-                self.writeArm(map(int,arr))
+                self.arm(map(int,arr))
 
     def calibrate(self,string):
         """Author: Cheng Hao Yuan, Yiran
@@ -630,8 +609,7 @@ class ArmObj:
         if not (InputArray[1].isdigit() or InputArray[1] == "-all"):
             self.badInput()
             return
-        
-	if InputArray[1] == "-all":
+        if InputArray[1] == "-all":
             ## calibrate all
             print "Calibrating all links..."
             for x in self.positions:
@@ -663,10 +641,6 @@ class ArmObj:
             print "Invalid command for detect."
         return
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 683a90a05358512d8be3a681c7437cbf36b6e528
     def badInput(self):
         """Author: Chenliu Stephen Lu
 

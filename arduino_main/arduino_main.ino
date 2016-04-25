@@ -122,9 +122,9 @@ void setup() {
   attachInterrupt(1, doEncoderA, CHANGE);
 
   currPos, lastPos, velocity  = 0;
-
-  Serial.println("Initial calibration...");
-  calibrate();
+  
+  //Serial.println("Initial calibration...");
+  //calibrate();
 
   Serial.println("Ready!");
 }
