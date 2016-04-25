@@ -216,6 +216,10 @@ void resetLimits(){
 
 // callback for received data
 void receiveData(int byteCount) {
+  // clears buffer
+  for (int k = 0; k < 4; k++) {
+    i2cmotorpwm[k] = '\0';
+  }
   i = 0;
   while(Wire.available()) {
     if (i == 0) {
@@ -256,10 +260,12 @@ void interp() {
     calibrate();
   } else if (mode == 'l') {
     Setpoint += atof(i2cmotorpwm);
+    Serial.println(i2cmotorpwm);
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint); 
   } else if (mode == 'L') {
     Setpoint = atof(i2cmotorpwm);
+    Serial.println(i2cmotorpwm);
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint);  
   }
