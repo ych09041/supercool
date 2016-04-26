@@ -395,7 +395,7 @@ class ArmObj:
         for address in self.positions:
             ##Implicit assumption here that once something is ready, then it stays ready.
             self.writeOneLink(address, "l0") ##write it a null movement command to force Arduino to give ready status
-            while (self.readOneLink(self.positions[linkNumber - 1]) != "1111"): ##Only move forward if Arduino is ready
+            while (self.readOneLink(address) != "1111"): ##Only move forward if Arduino is ready
                 time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.
         
         linkIndex = 0
