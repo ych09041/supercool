@@ -5,8 +5,10 @@
 #define DEGREES_PER_TICK 1.0/TICKS_PER_DEGREE
 
 // button switch pins
-#define BUTTON_L 0
-#define BUTTON_R 1
+//#define BUTTON_L 0
+//#define BUTTON_R 1
+#define BUTTON_L A0
+#define BUTTON_R A1 // only when debugging. Once done, switch to D0/D1 and disable all Serial actions.
 
 // encoder pins
 #define encoder0PinA 3
@@ -155,10 +157,12 @@ void loop() {
   // If in manual mode
   // check buttons for manual move
   if (!digitalRead(BUTTON_L)) { // if button is held pressed
-    Setpoint = currPos - 1.0;
+  //  Serial.println("L button pressed");
+    Setpoint -= 1.0;
     resetLimits();
   } else if (!digitalRead(BUTTON_R)) {
-    Setpoint = currPos + 1.0;
+   // Serial.println("R button pressed");
+    Setpoint += 1.0;
     resetLimits();
   }
 
@@ -227,7 +231,7 @@ void receiveData(int byteCount) {
       Serial.print("Mode received: ");
       Serial.println(mode);
     } else {
-      i2cmotorpwm[i-1] = Wire.read();
+      i2cmotorpwm[i-1] = (char)Wire.read();
       Serial.print("Number received: ");
       Serial.println(i2cmotorpwm[i-1]);
     }
@@ -256,11 +260,15 @@ void sendData() {
 
 
 void interp() {
+  Serial.print("setpoint before change: ");////////////
+  Serial.println(Setpoint);//////////////
   if (mode == 'c') {
     calibrate();
   } else if (mode == 'l') {
     Setpoint += atof(i2cmotorpwm);
-    Serial.println(i2cmotorpwm);
+
+    Serial.println(i2cmotorpwm);////////////////
+    Serial.println(atof(i2cmotorpwm));/////////////
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint); 
   } else if (mode == 'L') {
@@ -357,7 +365,7 @@ void motor_brake_raw() {
 
 int pwm_float2int(float in) {
   int out = (int)(in*255.0);
-  Serial.println(out);
+ // Serial.println(out);
   return out;
 }
 
