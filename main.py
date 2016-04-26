@@ -135,6 +135,7 @@ class ArmObj:
 
         for i in newCommand:
             newCmdList.append(ord(i))
+        
             
         self.bus.write_i2c_block_data(address, ord(cmdChar), newCmdList[1:])
 
@@ -351,6 +352,11 @@ class ArmObj:
                 print "Advancing link %d by %d relative" % (linkNumber, targetPosition)
             else:
                 print "Moving link %d to %d absolute" % (linkNumber, targetPosition)
+
+
+            self.writeOneLink(self.positions[linkNumber - 1], "l0") ##write it a null movement command to force Arduino to give ready status
+            while (self.readOneLink(self.positions[linkNumber - 1]) != "1111"): ##Only move forward if Arduino is ready
+                time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.    
             self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
         else:
             print "ERROR: Target link is out of range"
@@ -385,6 +391,13 @@ class ArmObj:
             print("Wrong number of position arguments")
             return
 
+
+        for address in self.positions:
+            ##Implicit assumption here that once something is ready, then it stays ready.
+            self.writeOneLink(address, "l0") ##write it a null movement command to force Arduino to give ready status
+            while (self.readOneLink(self.positions[linkNumber - 1]) != "1111"): ##Only move forward if Arduino is ready
+                time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.
+        
         linkIndex = 0
         for setpoint in setpointList:
             if not setpoint.isdigit():
