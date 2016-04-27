@@ -43,7 +43,7 @@ int SLAVE_ADDRESS = 0x04; // some initial motorpwmue, changed later
 int number = 0;
 int state = 0;
 char mode = 'c';
-volatile int calibrated = 0;
+volatile int calibrated = 1;
 
 int incomingByte = 0;  // for incoming serial data
 
@@ -61,7 +61,7 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 long minEncoderPos = 0;
 long maxEncoderPos = 80 * TICKS_PER_DEGREE;// Needs to be calibrated
 long midEncoderPos = (maxEncoderPos - minEncoderPos) / 2.0;
-volatile signed long encoder0Pos = midEncoderPos;
+volatile signed long encoder0Pos = 0;
 unsigned long velocityLastTime, lastTime, currTime;
 double currPos, lastPos, velocity, ticktodeg;
 int SampleTime = 700; //700  msec
@@ -109,7 +109,7 @@ void setup() {
   
   Serial.println("Calibrating...");
   
-  calibrate();
+  //calibrate();
 
   Input = 0;
   Setpoint = 0; // degrees
@@ -152,7 +152,9 @@ float prevPrevVel=0;
 
 
 void loop() {
-
+  if (Setpoint > maxSetpoint) Setpoint = maxSetpoint;
+  if (Setpoint < minSetpoint) Setpoint = minSetpoint;
+  
   if (!calibrated) calibrate();
   
   currPos = encoder0Pos * DEGREES_PER_TICK;
@@ -294,7 +296,6 @@ void interp() {
     calibrated = 0;
   } else if (mode == 'l') {
     Setpoint += atof(i2cmotorpwm);
-
     Serial.println(i2cmotorpwm);////////////////
     Serial.println(atof(i2cmotorpwm));/////////////
     Serial.print("Motor setpoint: ");
@@ -308,27 +309,27 @@ void interp() {
 }
 
 void calibrate() {
-  Serial.println("Start calibration...");
-  myPID.SetMode(MANUAL);
-  //int count_loop = 0;
-  digitalWrite(LED_R, HIGH);
-  while ((digitalRead(BUTTON_L)) && (digitalRead(BUTTON_R))) {
-    motor_forward_raw(0.2);
-    delay(100);
-    digitalWrite(LED_R, LOW);
-    //motor_brake_raw();
-    //delay(10);
-  }
-  motor_brake_raw();
-  digitalWrite(LED_R, HIGH);
-  encoder0Pos = 40.0 * TICKS_PER_DEGREE;
-  currPos = 40.0;
-  Input = currPos;
-  myPID.SetMode(AUTOMATIC);
-  Setpoint = 0.0;
-  delay(1000);
-  calibrated = 1;
-  Serial.println("Calibrated.");
+//  Serial.println("Start calibration...");
+//  myPID.SetMode(MANUAL);
+//  //int count_loop = 0;
+//  digitalWrite(LED_R, HIGH);
+//  while ((digitalRead(BUTTON_L)) && (digitalRead(BUTTON_R))) {
+//    motor_forward_raw(0.2);
+//    delay(100);
+//    digitalWrite(LED_R, LOW);
+//    //motor_brake_raw();
+//    //delay(10);
+//  }
+//  motor_brake_raw();
+//  digitalWrite(LED_R, HIGH);
+//  encoder0Pos = 40.0 * TICKS_PER_DEGREE;
+//  currPos = 40.0;
+//  Input = currPos;
+//  myPID.SetMode(AUTOMATIC);
+//  Setpoint = 0.0;
+//  delay(1000);
+//  calibrated = 1;
+//  Serial.println("Calibrated.");
 }
 
 
@@ -367,13 +368,17 @@ void sendTime() {
   }
 }
 
-int sendPosTemp;
+long sendPosTemp;
 void sendPos() {
-  sendPosTemp = (int) currPos + 50;
+  sendPosTemp = (long) currPos + 50;
+//  Serial.println("sendPosTemp original");
+  //Serial.println(sendPosTemp);
   sendPosTemp = (sendPosTemp >> (8 * sendIndex)) & 0xff;
+  Serial.println("===");
+  Serial.println(sendPosTemp);
   Wire.write(sendPosTemp);
   sendIndex++;
-  if (sendIndex > 1) {
+  if (sendIndex > 3) {
     sendIndex = 0;
   }
 }
