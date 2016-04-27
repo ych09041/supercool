@@ -296,12 +296,16 @@ void interp() {
     calibrated = 0;
   } else if (mode == 'l') {
     Setpoint += atof(i2cmotorpwm);
+    if (Setpoint > maxSetpoint) Setpoint = maxSetpoint;
+    if (Setpoint < minSetpoint) Setpoint = minSetpoint;
     Serial.println(i2cmotorpwm);////////////////
     Serial.println(atof(i2cmotorpwm));/////////////
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint);
   } else if (mode == 'L') {
     Setpoint = atof(i2cmotorpwm);
+    if (Setpoint > maxSetpoint) Setpoint = maxSetpoint;
+    if (Setpoint < minSetpoint) Setpoint = minSetpoint;
     Serial.println(i2cmotorpwm);
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint);
@@ -368,19 +372,20 @@ void sendTime() {
   }
 }
 
-long sendPosTemp;
+long sendPosTemp = 0L;
 void sendPos() {
-  sendPosTemp = (long) currPos + 50;
+  sendPosTemp = (long) currPos + 50L;
 //  Serial.println("sendPosTemp original");
   //Serial.println(sendPosTemp);
   sendPosTemp = (sendPosTemp >> (8 * sendIndex)) & 0xff;
-  Serial.println("===");
+ // Serial.println("===");
   Serial.println(sendPosTemp);
   Wire.write(sendPosTemp);
   sendIndex++;
   if (sendIndex > 3) {
     sendIndex = 0;
   }
+  Serial.println(sendIndex);
 }
 
 //---------------------------------------------------------------
