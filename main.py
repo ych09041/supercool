@@ -68,11 +68,20 @@ class ArmObj:
 
 
         try:
+#            print address
             self.bus.write_byte(address,100) ## 100 is letter d
+ #           print "success write"
             lmb = self.readMultipleBytes(address, 4)
-            number = 0
+  #          print "=====lmb start====="
+   #         print ord(lmb[0])
+    #        print ord(lmb[1])
+     #       print ord(lmb[2])
+      #      print ord(lmb[3])
+       #     print "===== lmb end ==="
+            number = 0L
             for i in range(0, 4):
-                number = (int(lmb[i])<<8) | number
+                number = (ord(lmb[i])<<8*i) + number
+            print number
             return number
         except IOError:
             return -1
@@ -135,9 +144,13 @@ class ArmObj:
 
         for i in newCommand:
             newCmdList.append(ord(i))
-        
-            
-        self.bus.write_i2c_block_data(address, ord(cmdChar), newCmdList[1:])
+#        print newCmdList
+ #       print address
+        if len(newCmdList) == 1:
+            self.bus.write_byte(address,ord(cmdChar))
+        else:
+            print "multi print"
+            self.bus.write_i2c_block_data(address, ord(cmdChar), newCmdList[1:])
 
         return
 
@@ -147,9 +160,9 @@ class ArmObj:
         Reads numbytes number of bytes from the arduino at address. Return the multi-byte concatenated data.
 
         """
-        data = ""
+        data = []
         for i in range(0,numbytes):
-            data += str(self.bus.read_byte(address))
+            data.append(chr(self.bus.read_byte(address)))
         return data
 
     def readOneLink(self,address):
@@ -165,6 +178,8 @@ class ArmObj:
 
         """
         data = self.readMultipleBytes(address,4)
+        print "readOneLink returns:"
+        print data
         return data
 
 
@@ -354,8 +369,14 @@ class ArmObj:
                 print "Moving link %d to %d absolute" % (linkNumber, targetPosition)
 
 
-            self.writeOneLink(self.positions[linkNumber - 1], "l0") ##write it a null movement command to force Arduino to give ready status
-            while (self.readOneLink(self.positions[linkNumber - 1]) != "1111"): ##Only move forward if Arduino is ready
+            self.writeOneLink(self.positions[linkNumber - 1], 'l0') ##write it a null movement command to force Arduino to give ready status
+##            print "wrote el zero"
+            time.sleep(0.1)
+            while True: ##Only move forward if Arduino is ready
+                checkReady = self.readOneLink(self.positions[linkNumber - 1])
+            #    print ord(checkReady[3])
+                if ord(checkReady[3]) == 49:
+                    break
                 time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.    
             self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
         else:
@@ -394,13 +415,19 @@ class ArmObj:
 
         for address in self.positions:
             ##Implicit assumption here that once something is ready, then it stays ready.
-            self.writeOneLink(address, "l0") ##write it a null movement command to force Arduino to give ready status
-            while (self.readOneLink(address) != "1111"): ##Only move forward if Arduino is ready
-                time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.
+            self.writeOneLink(address, 'l0') ##write it a null movement command to force Arduino to give ready status
+##            print "wrote el zero"
+            time.sleep(0.1)
+            while True: ##Only move forward if Arduino is ready
+                checkReady = self.readOneLink(address)
+            #    print ord(checkReady[3])
+                if ord(checkReady[3]) == 49:
+                    break
+                time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.    
         
         linkIndex = 0
         for setpoint in setpointList:
-            if not setpoint.isdigit():
+            if not setpoint.replace("-","").isdigit():
                 print("invalid position setpoint input")
                 return
             self.writeOneLink(self.positions[linkIndex], commandChar+setpoint)
@@ -455,6 +482,9 @@ class ArmObj:
         if numberOfWords == 1:
             ## this means that the only word is "Record" and thus a whole line is recorded    
             theFile = self.file
+            if theFile is None:
+                print "No file open. Operation aborted."
+                return
             ## moves to the end of the .csv file
             theFile.seek(0,2)
             
@@ -462,17 +492,21 @@ class ArmObj:
             
             absPositions = ""
             
-            for i in range(0,len(addressLinks)-1): 
+            for i in range(0,len(addressLinks)): 
                 
                 ## write to Arduino to recieve position feedback for each link
-                self.writeOneLink(add1,"r")
-                
+                self.writeOneLink(addressLinks[i],"r")
+                data_read = self.readOneLink(addressLinks[i])
+                print data_read
+                pos_data_read = (ord(data_read[1])<<8) + ord(data_read[0]) - 50
+                                
                 if i == len(addressLinks)-1:   
                     ## append the position to the array without comma because last value in row
-                    absPositions = absPositions + str(self.readOneLink(add1))
+                    print "reading"
+                    absPositions = absPositions + str(pos_data_read)
                 else:
                     ## append the position to the array with comma
-                    absPositions = absPositions + str(self.readOneLink(add1)) + ","
+                    absPositions = absPositions + str(int(pos_data_read)) + ","
             ## adds the row of ABS positions
             theFile.write(absPositions + '\n')
         
@@ -486,6 +520,9 @@ class ArmObj:
 
                     ## this means that the only word is "Record" and thus a whole line is recorded    
                     theFile = self.file
+                    if theFile is None:
+                        print "No file open. Operation aborted."
+                        return
                     ## moves to the end of the .csv file
                     theFile.seek(0,2)
                     
@@ -523,7 +560,7 @@ class ArmObj:
         if len(parsedString) > 2:
             self.badInput()
             return
-        if parsedString[0] != "Open" or parsedString[0] != "open":
+        if parsedString[0] != "Open" and parsedString[0] != "open":
             self.badInput()
             return
         
@@ -534,17 +571,17 @@ class ArmObj:
             print "File path needs to end in \'.csv\'"
             return
         else:
-            if os.path.isfile(parsedString[0]):
+            if os.path.isfile(parsedString[1]):
                 userInput = raw_input("Specified file already exists. (O)verwrite or (A)ppend? ")
                 if userInput == "O" or userInput == "o":
                     try:
-                        self.file = open(parsedString[0], 'w+')
+                        self.file = open(parsedString[1], 'w+')
                     except IOError:
                         print "Permission denied to open the file. Operation aborted."
                     return
                 elif userInput == "A" or userInput == "a":
                     try:
-                        self.file = open(parsedString[0], 'w+')
+                        self.file = open(parsedString[1], 'a+')
                     except IOError:
                         print "Permission denied to open the file. Operation aborted."
                     return
@@ -552,6 +589,7 @@ class ArmObj:
                     self.badInput()
                     return
             else:
+                self.file = open(parsedString[1], 'w+')
                 return
                 
                 
@@ -568,7 +606,7 @@ class ArmObj:
         returns nothing
         sets self.file to None"""
 
-        if string != "Close" or string != "close":
+        if string != "Close" and string != "close":
             self.badInput()
             return
         elif self.file is None:
@@ -601,7 +639,13 @@ class ArmObj:
             if arr[0] == 'WAIT':# We are waiting for ceratin amount of time in position
                 time.sleep(int(arr[1])/1000.)
             else:# We move the arm
-                self.arm(map(int,arr))
+                armWrite = "arm"
+                for tempString in arr:
+                    armWrite = armWrite+" "+tempString
+                armWrite = armWrite + " " + "-abs"
+                self.arm(armWrite)
+        print "DONE"
+        return
 
     def calibrate(self,string):
         """Author: Cheng Hao Yuan, Yiran

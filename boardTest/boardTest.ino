@@ -32,12 +32,12 @@ void loop() {
   digitalWrite(LED_G,HIGH);
   digitalWrite(LED_R,LOW);
   digitalWrite(LED_B,LOW);
-  motor_forward_raw(0.2);
+  motor_forward_raw(1);
   delay(2000);
   digitalWrite(LED_G,LOW);
   digitalWrite(LED_R,HIGH);
   digitalWrite(LED_B,HIGH);
-  motor_reverse_raw(0.2);
+  motor_reverse_raw(1);
   delay(2000);
   
 }
@@ -48,7 +48,7 @@ void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT4, 255);
-  analogWrite(INPUT2, pwm_float2int(pwm));  
+  analogWrite(INPUT2, constrain(pwm_float2int(pwm),0,18));  
 }
 
 void motor_reverse_raw(float pwm) {
@@ -57,7 +57,7 @@ void motor_reverse_raw(float pwm) {
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT3, 255);
-  analogWrite(INPUT1, pwm_float2int(pwm)); 
+  analogWrite(INPUT1, constrain(pwm_float2int(pwm),0,18)); 
 }
 
 void motor_brake_raw() {
