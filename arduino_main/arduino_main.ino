@@ -5,8 +5,12 @@
 #define DEGREES_PER_TICK 1.0/TICKS_PER_DEGREE
 
 // button switch pins
+
+//#define BUTTON_L 0
+//#define BUTTON_R 1
 #define BUTTON_L A0
-#define BUTTON_R A1
+#define BUTTON_R A1 // only when debugging. Once done, switch to D0/D1 and disable all Serial actions.
+
 
 // encoder pins
 #define encoder0PinA 3
@@ -256,7 +260,7 @@ void receiveData(int byteCount) {
       //Serial.print("Mode received: ");
       Serial.println(mode);
     } else {
-      i2cmotorpwm[i - 1] = Wire.read();
+      i2cmotorpwm[i-1] = (char)Wire.read();
       Serial.print("Number received: ");
       Serial.println(i2cmotorpwm[i - 1]);
     }
@@ -284,11 +288,15 @@ void sendData() {
 //Abstracted functions for doing command interperation
 
 void interp() {
+  Serial.print("setpoint before change: ");////////////
+  Serial.println(Setpoint);//////////////
   if (mode == 'c') {
     calibrated = 0;
   } else if (mode == 'l') {
     Setpoint += atof(i2cmotorpwm);
-    Serial.println(i2cmotorpwm);
+
+    Serial.println(i2cmotorpwm);////////////////
+    Serial.println(atof(i2cmotorpwm));/////////////
     Serial.print("Motor setpoint: ");
     Serial.println(Setpoint);
   } else if (mode == 'L') {
