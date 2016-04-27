@@ -28,13 +28,27 @@ class ArmObj:
         self.bus = busLine
         self.positions = []
         self.errorState = False
-        self.linkMin = -45
-        self.linkMax = 45
+        self.linkMin = -40
+        self.linkMax = 40
         self.i2cMin = i2cMinRange
         self.i2cMax = i2cMaxRange
         self.posDetect()
 
         self.file = None
+
+    def clamp(self, toClamp):
+        """Author: Chenliu Stephen Lu
+
+        clamps the input to linkMin, linkMax.
+
+        returns input that has been clamped"""
+
+        if toClamp > self.linkMax:
+            return self.linkMax
+        elif toClamp < self.linkMin:
+            return self.linkMin
+
+        return toClamp
 
     def posDetect(self):
         """Author:Chenliu Stephen Lu
@@ -70,6 +84,7 @@ class ArmObj:
         try:
 #            print address
             self.bus.write_byte(address,100) ## 100 is letter d
+            time.sleep(0.1)
  #           print "success write"
             lmb = self.readMultipleBytes(address, 4)
   #          print "=====lmb start====="
@@ -125,12 +140,12 @@ class ArmObj:
                 signChar = "0"
 
             value = int(command[1:])
-            if value > self.linkMax:
-                print "Trying to move too far!"
-                value = self.linkMax
-            elif value < self.linkMin:
-                print "Trying to move too far!"
-                value = self.linkMin
+##            if value > self.linkMax:
+##                print "Trying to move too far!"
+##                value = self.linkMax
+##            elif value < self.linkMin:
+##                print "Trying to move too far!"
+##                value = self.linkMin
 
             if value < 10 and value > 0:
                 padChar = "0"
@@ -162,7 +177,13 @@ class ArmObj:
         """
         data = []
         for i in range(0,numbytes):
-            data.append(chr(self.bus.read_byte(address)))
+            temp = self.bus.read_byte(address)
+            ##print temp
+            time.sleep(0.01)
+            ##data.append(chr(self.bus.read_byte(address)))
+            data.append(chr(temp))
+            time.sleep(0.01)
+            ##print data
         return data
 
     def readOneLink(self,address):
@@ -178,8 +199,8 @@ class ArmObj:
 
         """
         data = self.readMultipleBytes(address,4)
-        print "readOneLink returns:"
-        print data
+        ##print "readOneLink returns:"
+        ##print data
         return data
 
 
@@ -378,7 +399,14 @@ class ArmObj:
                 if ord(checkReady[3]) == 49:
                     break
                 time.sleep(0.1) ##Give the link some time to operate. Don't clog up the Arduino with i2c calls.    
-            self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
+
+            if rel_or_abs == "L":
+                tempLinkCommand = rel_or_abs + str(self.clamp(int(linkCommand[1:])))
+                print tempLinkCommand
+                self.writeOneLink(self.positions[linkNumber - 1], tempLinkCommand)
+            elif rel_or_abs == "l":
+                self.writeOneLink(self.positions[linkNumber - 1], linkCommand)
+
         else:
             print "ERROR: Target link is out of range"
 
@@ -430,7 +458,12 @@ class ArmObj:
             if not setpoint.replace("-","").isdigit():
                 print("invalid position setpoint input")
                 return
-            self.writeOneLink(self.positions[linkIndex], commandChar+setpoint)
+            if commandChar == "L":
+                tempSetpoint = str(self.clamp(int(setpoint)))
+                ##print tempSetPoint
+                self.writeOneLink(self.positions[linkIndex], commandChar+tempSetpoint)
+            elif commandChar == "l":
+                self.writeOneLink(self.positions[linkIndex], commandChar+setpoint)
             linkIndex += 1
 
         return
@@ -496,9 +529,12 @@ class ArmObj:
                 
                 ## write to Arduino to recieve position feedback for each link
                 self.writeOneLink(addressLinks[i],"r")
+                time.sleep(0.1)
                 data_read = self.readOneLink(addressLinks[i])
                 print data_read
-                pos_data_read = (ord(data_read[1])<<8) + ord(data_read[0]) - 50
+                pos_data_read = int((ord(data_read[1])<<8) + ord(data_read[0]) - 50)
+
+                pos_data_read = self.clamp(pos_data_read)
                                 
                 if i == len(addressLinks)-1:   
                     ## append the position to the array without comma because last value in row
@@ -506,7 +542,7 @@ class ArmObj:
                     absPositions = absPositions + str(pos_data_read)
                 else:
                     ## append the position to the array with comma
-                    absPositions = absPositions + str(int(pos_data_read)) + ","
+                    absPositions = absPositions + str(pos_data_read) + ","
             ## adds the row of ABS positions
             theFile.write(absPositions + '\n')
         
@@ -641,6 +677,7 @@ class ArmObj:
             else:# We move the arm
                 armWrite = "arm"
                 for tempString in arr:
+                    
                     armWrite = armWrite+" "+tempString
                 armWrite = armWrite + " " + "-abs"
                 self.arm(armWrite)
