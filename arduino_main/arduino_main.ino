@@ -44,15 +44,19 @@ int SLAVE_ADDRESS = 0x04; // some initial motorpwmue, changed later
 int number = 0;
 int state = 0;
 char mode = 'c';
-volatile int calibrated = 0;
+volatile int calibrated = 1;
 
 int incomingByte = 0;  // for incoming serial data
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = .0012, Ki = 0.0004, Kd = 0.000125;
+double Kp = .0012, Ki = 0.0008, Kd = 0.00024;
+
+int loopCount = 0;
+
 double minPoint = -1.0;
 double maxPoint = 1.0;
+
 double motorpwm = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
@@ -100,10 +104,15 @@ void setup() {
   Serial.print("I2C slave address set to ");
   Serial.println(SLAVE_ADDRESS);
 
+
   if (SLAVE_ADDRESS == 7) {
-    DEAD_BAND = 28;
+    DEAD_BAND = 40;
   } else if (SLAVE_ADDRESS == 3) {
-    DEAD_BAND = 31;
+    DEAD_BAND = 34;
+  } else if (SLAVE_ADDRESS == 6) {
+    DEAD_BAND = 38;
+  } else if (SLAVE_ADDRESS == 4) {
+    DEAD_BAND = 38;
   } else {
     DEAD_BAND = 38;
   }
@@ -158,7 +167,15 @@ bool isAtPosition() {
 
 float prevVel=0;
 float prevPrevVel=0;
+//double tempKp;
 
+int MAX_LOOPS = 500;
+double tempKi = Ki;
+double vel_target = 0.1;
+
+double rampFunc(int toRamp) {
+  return pow(toRamp/50, 10);
+}
 
 void loop() {
   if (Setpoint > maxSetpoint) Setpoint = maxSetpoint;
@@ -171,22 +188,6 @@ void loop() {
   Input = currPos;
   currTime = millis();
 
-  if (Serial.available() > 0) {
-    int i = 0;
-    while (Serial.available()) {
-      if (i == 0) {
-        mode = Serial.read();
-        Serial.print("Mode received: ");
-        Serial.println(mode);
-      } else {
-        i2cmotorpwm[i - 1] = Serial.read();
-        Serial.print("Number received: ");
-        Serial.println(i2cmotorpwm[i - 1]);
-      }
-      i++;
-    }
-    interp();
-  }
 
   // check buttons for manual move
   if (!digitalRead(BUTTON_L)) { // if button is held pressed
@@ -196,10 +197,14 @@ void loop() {
     Setpoint = min(currPos + 5.0, maxSetpoint);
     Serial.println(Setpoint);
   }
-
+  //tempKp = gainScheduling(Kp, currPos, Setpoint);
+  //myPID.SetTunings(tempKp, Ki, Kd);
+  tempKi = min(2*rampFunc(loopCount), 2*rampFunc(MAX_LOOPS)) * Ki * max(10*(velocity - vel_target), 1);
+  myPID.SetTunings(Kp,tempKi,Kd);
   myPID.Compute();
 
   if (!isAtPosition()) {
+    loopCount++;
     if (Output > 0) {
       motor_forward_raw(Output);
       heading = 'a';
@@ -210,6 +215,7 @@ void loop() {
     }
   }
   else {
+    loopCount = 0;
     myPID.ZeroITerm();
     motor_brake_raw();
   }
@@ -229,6 +235,20 @@ void loop() {
   delay(CONTROL_PERIOD);
 }
 
+
+//------------------------------------------------------------
+//#define minKp Kp*0.5
+//#define maxKp Kp*1.5
+//
+//double gainScheduling(double _Kp, double _currPos, double _Setpoint) {
+//  if (_currPos >= 0.0 && _Setpoint < _currPos) { // in positive, trying to come up
+//    return minKp + (maxSetpoint-_currPos) / maxSetpoint * (maxKp - minKp);
+//  } else if (_currPos <= 0.0 && _Setpoint > _currPos) { // in negative, trying to come up
+//    return minKp + (_currPos-minSetpoint) / maxSetpoint * (maxKp - minKp);
+//  } else {
+//    return _Kp;
+//  }
+//}
 
 //------------------------------------------------------------
 
@@ -323,7 +343,7 @@ void calibrate() {
   Input = currPos;
   myPID.SetMode(AUTOMATIC);
   Setpoint = 0.0;
-  motor_reverse_raw(0.2);
+  motor_reverse_raw(0.25);
   delay(300);
   motor_brake_raw();
   delay(1000);
@@ -385,7 +405,7 @@ void sendPos() {
 
 //---------------------------------------------------------------
 
-#define MAX_PWM 50
+#define MAX_PWM 230
 #define RAMP_CONST 200
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
@@ -394,7 +414,7 @@ void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT4, 255);
-  analogWrite(INPUT2, constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST));
+  analogWrite(INPUT2, constrain(constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST), 0, 255));
 }
 
 void motor_reverse_raw(float pwm) {
@@ -403,7 +423,7 @@ void motor_reverse_raw(float pwm) {
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT3, 255);
-  analogWrite(INPUT1, constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST));
+  analogWrite(INPUT1, constrain(constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST), 0, 255));
 }
 
 void motor_brake_raw() {
