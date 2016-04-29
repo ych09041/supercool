@@ -3,6 +3,7 @@
 
 #define TICKS_PER_DEGREE 4.789233*1.125 //1.125 turns ~90deg to 80deg
 #define DEGREES_PER_TICK 1.0/TICKS_PER_DEGREE
+#define CONTROL_PERIOD 20
 
 // button switch pins
 
@@ -49,9 +50,9 @@ int incomingByte = 0;  // for incoming serial data
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = .03, Ki = 0.01, Kd = 0.0;
-double minPoint = -24.0;
-double maxPoint = 24.0;
+double Kp = .0012, Ki = 0.0004, Kd = 0.000125;
+double minPoint = -1.0;
+double maxPoint = 1.0;
 double motorpwm = 0;
 char heading = 'a';
 //Specify the links and initial tuning parameters
@@ -65,7 +66,7 @@ volatile signed long encoder0Pos = 0;
 unsigned long velocityLastTime, lastTime, currTime;
 double currPos, lastPos, velocity, ticktodeg;
 int SampleTime = 700; //700  msec
-int velocitySampleTime = 5;
+int velocitySampleTime = CONTROL_PERIOD;
 
 
 char i2cmotorpwm[4];
@@ -104,7 +105,7 @@ void setup() {
   } else if (SLAVE_ADDRESS == 3) {
     DEAD_BAND = 31;
   } else {
-    DEAD_BAND = 20;
+    DEAD_BAND = 38;
   }
 
   // initialize i2c as slave
@@ -124,7 +125,7 @@ void setup() {
 
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
-  myPID.SetSampleTime(5);
+  myPID.SetSampleTime(CONTROL_PERIOD);
   myPID.SetControllerDirection(DIRECT);
   myPID.SetOutputLimits((double) minPoint, (double) maxPoint);
 
@@ -190,11 +191,9 @@ void loop() {
   // check buttons for manual move
   if (!digitalRead(BUTTON_L)) { // if button is held pressed
     Setpoint = max(currPos - 5.0, minSetpoint);
-    resetLimits();
     Serial.println(Setpoint);
   } else if (!digitalRead(BUTTON_R)) {
     Setpoint = min(currPos + 5.0, maxSetpoint);
-    resetLimits();
     Serial.println(Setpoint);
   }
 
@@ -202,13 +201,11 @@ void loop() {
 
   if (!isAtPosition()) {
     if (Output > 0) {
-      motorpwm = myMap(Output, 0, maxPoint, 0, 1.0);
-      motor_forward_raw(motorpwm);
+      motor_forward_raw(Output);
       heading = 'a';
     }
     else {
-      motorpwm = myMap(-Output, 0, maxPoint, 0, 1.0);
-      motor_reverse_raw(motorpwm);
+      motor_reverse_raw(Output);
       heading = 'd';
     }
   }
@@ -229,31 +226,9 @@ void loop() {
     lastPos = currPos;
   }
 
-  delay(5);
+  delay(CONTROL_PERIOD);
 }
 
-
-//------------------------------------------------------------
-
-  //Functions to be organized later
-
-  /*
-   * Reset limits of controller such that the controller limits
-   * scale with the referenceto replicate similar behavior
-   */
-
-void resetLimits() {
-  if (abs(Setpoint) >= 4.0 ) {
-    minPoint = (double) - 1.0 * abs(Setpoint) * 6.0;
-    maxPoint = (double) abs(Setpoint) * 6.0;
-    myPID.SetOutputLimits(minPoint, maxPoint);
-  }
-  else {
-    minPoint = (double) - 1.0 * abs(4.0) * 6.0;
-    maxPoint = (double) abs(4.0) * 6.0;
-    myPID.SetOutputLimits(minPoint, maxPoint);
-  }
-}
 
 //------------------------------------------------------------
 
@@ -348,8 +323,8 @@ void calibrate() {
   Input = currPos;
   myPID.SetMode(AUTOMATIC);
   Setpoint = 0.0;
-  motor_reverse_raw(0.0);
-  delay(100);
+  motor_reverse_raw(0.2);
+  delay(300);
   motor_brake_raw();
   delay(1000);
   calibrated = 1;
