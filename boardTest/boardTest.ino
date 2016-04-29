@@ -9,6 +9,12 @@ int LED_R = 11;
 int LED_G = 12;
 int LED_B = 13;
 
+#define BUTTON_L 1
+#define BUTTON_R 0
+bool LED_G_ON = 0;
+bool LED_B_ON = 0;
+ 
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -21,25 +27,46 @@ void setup() {
   digitalWrite(INPUT3, LOW);
   pinMode(INPUT4, OUTPUT);
   digitalWrite(INPUT4, LOW);
+
+  pinMode(BUTTON_L, INPUT_PULLUP);
+  pinMode(BUTTON_R, INPUT_PULLUP);
   
   pinMode(LED_R,OUTPUT);
   pinMode(LED_G,OUTPUT);
   pinMode(LED_B,OUTPUT);
+
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(LED_G,HIGH);
-  digitalWrite(LED_R,LOW);
-  digitalWrite(LED_B,LOW);
-  motor_forward_raw(1);
-  delay(2000);
-  digitalWrite(LED_G,LOW);
-  digitalWrite(LED_R,HIGH);
-  digitalWrite(LED_B,HIGH);
-  motor_reverse_raw(1);
-  delay(2000);
-  
+//  digitalWrite(LED_G,HIGH);
+//  digitalWrite(LED_R,LOW);
+//  digitalWrite(LED_B,LOW);
+//  motor_forward_raw(1);
+//  delay(2000);
+//  digitalWrite(LED_G,LOW);
+//  digitalWrite(LED_R,HIGH);
+//  digitalWrite(LED_B,HIGH);
+//  motor_reverse_raw(1);
+//  delay(2000);
+//  
+
+  if (digitalRead(BUTTON_L) == LOW && !LED_G_ON) {
+    LED_G_ON = 1;
+    digitalWrite(LED_G, HIGH);
+  } else if (LED_G_ON) {
+    LED_G_ON = 0;
+    digitalWrite(LED_G, LOW);
+  }
+
+  if (digitalRead(BUTTON_R) == LOW && !LED_B_ON) {
+    LED_B_ON = 1;
+    digitalWrite(LED_B, HIGH);
+  } else if (LED_B_ON) {
+    LED_B_ON = 0;
+    digitalWrite(LED_B, LOW);
+  }
 }
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0

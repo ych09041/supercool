@@ -6,19 +6,19 @@
 
 // button switch pins
 
-//#define BUTTON_L 0
-//#define BUTTON_R 1
-#define BUTTON_L A0
-#define BUTTON_R A1 // only when debugging. Once done, switch to D0/D1 and disable all Serial actions.
+#define BUTTON_R 0
+#define BUTTON_L 1
+//#define BUTTON_L A0
+//#define BUTTON_R A1 // only when debugging. Once done, switch to D0/D1 and disable all Serial actions.
 
 
 // encoder pins
 #define encoder0PinA 3
 #define encoder0PinB 2
 
-#define maxSetpoint 40
-#define minSetpoint -40
-#define DEAD_BAND 20
+#define maxSetpoint 33
+#define minSetpoint -33
+int DEAD_BAND;
 
 // motor drive pins
 // 2 and 4 should be HIGH at the same time, 1 and 3 same time. NEVER OTHERWISE.
@@ -43,13 +43,13 @@ int SLAVE_ADDRESS = 0x04; // some initial motorpwmue, changed later
 int number = 0;
 int state = 0;
 char mode = 'c';
-volatile int calibrated = 1;
+volatile int calibrated = 0;
 
 int incomingByte = 0;  // for incoming serial data
 
 // Controller variables
 double Setpoint, Input, Output;
-double Kp = .12, Ki = 0.0, Kd = 0.0;
+double Kp = .03, Ki = 0.01, Kd = 0.0;
 double minPoint = -24.0;
 double maxPoint = 24.0;
 double motorpwm = 0;
@@ -73,7 +73,7 @@ int i;
 
 void setup() {
 
-  Serial.begin(115200);
+  //Serial.begin(115200);
   pinMode(INPUT1, OUTPUT);
   digitalWrite(INPUT1, LOW);
   pinMode(INPUT2, OUTPUT);
@@ -98,6 +98,14 @@ void setup() {
   SLAVE_ADDRESS = !digitalRead(SW1) * 1 + !digitalRead(SW2) * 2 + !digitalRead(SW3) * 4 + 3;
   Serial.print("I2C slave address set to ");
   Serial.println(SLAVE_ADDRESS);
+
+  if (SLAVE_ADDRESS == 7) {
+    DEAD_BAND = 28;
+  } else if (SLAVE_ADDRESS == 3) {
+    DEAD_BAND = 31;
+  } else {
+    DEAD_BAND = 20;
+  }
 
   // initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
@@ -205,6 +213,7 @@ void loop() {
     }
   }
   else {
+    myPID.ZeroITerm();
     motor_brake_raw();
   }
 
@@ -313,27 +322,38 @@ void interp() {
 }
 
 void calibrate() {
-//  Serial.println("Start calibration...");
-//  myPID.SetMode(MANUAL);
-//  //int count_loop = 0;
-//  digitalWrite(LED_R, HIGH);
-//  while ((digitalRead(BUTTON_L)) && (digitalRead(BUTTON_R))) {
-//    motor_forward_raw(0.2);
-//    delay(100);
-//    digitalWrite(LED_R, LOW);
-//    //motor_brake_raw();
-//    //delay(10);
-//  }
-//  motor_brake_raw();
-//  digitalWrite(LED_R, HIGH);
-//  encoder0Pos = 40.0 * TICKS_PER_DEGREE;
-//  currPos = 40.0;
-//  Input = currPos;
-//  myPID.SetMode(AUTOMATIC);
-//  Setpoint = 0.0;
-//  delay(1000);
-//  calibrated = 1;
-//  Serial.println("Calibrated.");
+  Serial.println("Start calibration...");
+  myPID.SetMode(MANUAL);
+  //int count_loop = 0;
+  digitalWrite(LED_R, LOW);
+  motor_forward_raw(0.0);
+  while ((digitalRead(BUTTON_R))) {
+    if (!digitalRead(BUTTON_L)) {
+      motor_brake_raw();
+      calibrated = 1;
+      //encoder0Pos = 0.0;
+      currPos = encoder0Pos * DEGREES_PER_TICK;
+      //currPos = 0.0;
+      Input = currPos;
+      Setpoint = currPos;
+      return;
+    }
+    //motor_brake_raw();
+    //delay(10);
+  }
+  motor_brake_raw();
+  digitalWrite(LED_R, HIGH);
+  encoder0Pos = (maxSetpoint+1) * TICKS_PER_DEGREE;
+  currPos = (maxSetpoint+1);
+  Input = currPos;
+  myPID.SetMode(AUTOMATIC);
+  Setpoint = 0.0;
+  motor_reverse_raw(0.0);
+  delay(100);
+  motor_brake_raw();
+  delay(1000);
+  calibrated = 1;
+  Serial.println("Calibrated.");
 }
 
 
@@ -390,6 +410,8 @@ void sendPos() {
 
 //---------------------------------------------------------------
 
+#define MAX_PWM 50
+#define RAMP_CONST 200
 
 void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT1, 0);
@@ -397,7 +419,7 @@ void motor_forward_raw(float pwm) { // pwm var range 0.0-1.0
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT4, 255);
-  analogWrite(INPUT2, constrain(pwm_float2int(pwm), DEAD_BAND, 80 - velocity*150));
+  analogWrite(INPUT2, constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST));
 }
 
 void motor_reverse_raw(float pwm) {
@@ -406,7 +428,7 @@ void motor_reverse_raw(float pwm) {
   analogWrite(INPUT3, 0);
   analogWrite(INPUT4, 0);
   analogWrite(INPUT3, 255);
-  analogWrite(INPUT1, constrain(pwm_float2int(pwm), DEAD_BAND, 80 - velocity*150));
+  analogWrite(INPUT1, constrain(pwm_float2int(pwm), DEAD_BAND, DEAD_BAND + MAX_PWM - velocity*RAMP_CONST));
 }
 
 void motor_brake_raw() {
